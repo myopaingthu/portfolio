@@ -126,7 +126,8 @@
 }
 
 @layer utilities {
-  [data-reveal] {
+  [data-reveal],
+  [data-hero-reveal] {
     opacity: 0;
     transform: translateY(14px);
   }
@@ -143,7 +144,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
+  [data-reveal],
+  [data-hero-reveal] {
     opacity: 1;
     transform: none;
     transition: none;
@@ -154,13 +156,15 @@
   }
 }
 
-.no-js [data-reveal] {
+.no-js [data-reveal],
+.no-js [data-hero-reveal] {
   opacity: 1;
   transform: none;
 }
 
 @media print {
-  [data-reveal] {
+  [data-reveal],
+  [data-hero-reveal] {
     opacity: 1 !important;
     transform: none !important;
   }

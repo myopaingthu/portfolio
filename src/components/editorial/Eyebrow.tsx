@@ -1,11 +1,14 @@
+import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/utils";
 
 export function Eyebrow({
   children,
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <p className={cn("label-mono", className)}>{children}</p>;
+  ...rest
+}: ComponentPropsWithoutRef<"p">) {
+  return (
+    <p className={cn("label-mono", className)} {...rest}>
+      {children}
+    </p>
+  );
 }

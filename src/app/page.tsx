@@ -14,13 +14,14 @@ export default function Home() {
       <section className="relative border-b border-hairline">
         <HeroField />
         <div className="relative mx-auto flex min-h-[calc(100svh-64px)] max-w-[1440px] flex-col justify-center px-6 py-20 md:px-10">
-          <p className="mb-8 text-[13px] tracking-[0.015em] text-paper-1">
+          <p className="mb-8 text-[13px] tracking-[0.015em] text-paper-1" data-hero-reveal>
             {site.name} / {site.role}
           </p>
 
           <h1
             className="max-w-[16ch] text-[clamp(52px,7.25vw,108px)] font-semibold leading-[0.98] tracking-[-0.058em] text-paper-0"
             data-field-mask
+            data-hero-reveal
           >
             Systems that
             <br />
@@ -34,11 +35,12 @@ export default function Home() {
           <p
             className="mt-8 max-w-[43ch] text-[clamp(16px,1.4vw,18px)] leading-[1.65] text-paper-1"
             data-field-mask
+            data-hero-reveal
           >
             {site.description}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3" data-field-mask>
+          <div className="mt-8 flex flex-wrap items-center gap-3" data-field-mask data-hero-reveal>
             <Link
               href="/projects"
               className="inline-flex min-h-12 items-center justify-center border border-paper-0 bg-paper-0 px-6 text-[13px] font-medium text-ink-0 no-underline transition-[background-color,border-color] duration-[180ms] hover:border-[#dfe3e9] hover:bg-[#dfe3e9]"

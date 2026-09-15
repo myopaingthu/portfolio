@@ -94,13 +94,13 @@ export default function ProjectsPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-10">
       <header className="border-b border-hairline pb-16">
-        <Eyebrow className="mb-8">projects — the record</Eyebrow>
-        <h1 className="max-w-[14ch] text-display font-semibold text-paper-0">
+        <Eyebrow className="mb-8" data-hero-reveal>projects — the record</Eyebrow>
+        <h1 className="max-w-[14ch] text-display font-semibold text-paper-0" data-hero-reveal>
           Shipped, not
           <br />
           shelved.
         </h1>
-        <p className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1">
+        <p className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1" data-hero-reveal>
           Nineteen projects across core banking, FinTech, e-commerce, AI automation
           and developer tooling. Ten in production for employers and clients, nine
           built to learn something specific.

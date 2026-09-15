@@ -325,7 +325,7 @@ Translate, colour, border, scale-x. No shadows, no filters, no 3D.
 
 ---
 
-## 6. Particle field (WebGPU)
+## 6. Particle field (WebGPU) — TWO systems, not one
 
 ```js
 if (!navigator.gpu?.requestAdapter
@@ -333,48 +333,51 @@ if (!navigator.gpu?.requestAdapter
     || navigator.connection?.saveData) return;          // renders nothing at all
 
 const COUNT = matchMedia("(pointer: coarse)").matches ? 45_000 : 110_000;
-
-scene.background = new Color(0x0b0c0e);
-const camera = new PerspectiveCamera(34, 1, 0.1, 20);
-camera.position.set(0, 0.1, 3.4);
 ```
 
-**Buffers** (TSL storage / `attributeArray`):
+Measured by sampling screenshots at four pointer positions. The field is **not** a uniform
+starfield — it is two distinct populations:
 
-| Buffer | Size | Meaning |
-|---|---|---|
-| targets | `Float32Array(4 * COUNT)` | vec4 glyph/shape target positions |
-| home | `Float32Array(3 * COUNT)` | vec3 scatter positions, `x ±4.14`, `y ±2.16`, `z −3·rand` |
-| scalars | `Float32Array(COUNT)` × 3 | per-particle phase / size / seed |
+### 6.1 Ambient band
 
-**Target generation:** text is rasterised to an offscreen 2D canvas, then opaque pixels are sampled
-to produce target positions. Glyph geometry comes from pixels, not font outlines.
+Confined to the **bottom ~28% of the hero viewport**. Vertical density, normalised, identical at
+every pointer position (1512x900 viewport):
 
-**DOM → world projection** — the clever part. Element rects are mapped into scene space so the
-field knows where the real text is:
-
-```js
-const halfH = 3.4 * Math.tan(34 * Math.PI / 360);   // camera dist × tan(fov/2)
-const halfW = halfH * (rect.width / rect.height);
-const wpp   = 2 * halfH / rect.height;              // world units per CSS pixel
-
-toWX     = (x) => ((x - rect.left) / rect.width * 2 - 1) * halfW;
-toWYview = (y) => -((y - rect.top) / rect.height * 2 - 1) * halfH;
+```
+y   0 - 614   0.00      <- top 68% of the hero is completely empty
+y   655       0.13
+y   695       0.86
+y   736       1.00      <- peak, ~0.82 of viewport height
+y   777       0.87
+y   818       0.43
+y   859       0.15
 ```
 
-Up to **6 tracked elements** become repulsion masks (centre + half-extents uniforms, padded ~0.05
-world units), keeping particles off live copy so the text stays readable. A `ResizeObserver` on
-`document.body` and each tracked element re-syncs the uniforms on layout change.
+Approximately Gaussian, centred at 0.82h with sigma ~0.065h. Horizontally it is **right-biased**,
+roughly 2x denser on the right half than the far left. Density in a clean band window
+(x 900-1460, y 700-840): mean luminance **48.4**, 49.7% of pixels above lum 40, 16.4% above 80.
 
-Roughly `min(16000, 0.15 * COUNT)` particles form the active/foreground subset; the rest stay
-ambient.
+The band drifts slowly and is displaced locally when the pointer comes near, springing back to
+its home position afterwards.
 
-The visible motes near the top-left and the cluster on the right are **other live visitors'
-cursors**, synced over a Supabase Realtime channel — `pointermove` is published passively, entries
-expire after 12s, cleanup runs every 4s. Hence the readout:
-`05 OTHER READERS ON THIS PAGE — THE MOTES ARE THEIR CURSORS`.
+### 6.2 Cursor blob
 
----
+A dense elliptical cluster, roughly **190 x 85 px**, that tracks the pointer anywhere in the hero
+with a spring lag, leaving a brief wake. Measured centred exactly on the pointer at rest
+(pointer 1300,760 -> blob 1300,770).
+
+On the reference this is per-visitor: each connected reader gets a blob, synced over Supabase
+Realtime, hence `05 OTHER READERS ON THIS PAGE - THE MOTES ARE THEIR CURSORS`.
+
+### 6.3 Renderer
+
+- `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
+- Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.
+- Camera **must sit at y = 0** if the DOM-to-world projection assumes an origin-centred camera;
+  the reference uses y = 0.1, and mixing the two puts every mapping out by ~43px.
+- DOM to world: `halfH = 3.4 * tan(17deg)`, `halfW = halfH * aspect`,
+  `worldPerPixel = 2 * halfH / rectHeight`.
+- Up to 6 tracked elements become repulsion masks so particles stay off live text.
 
 ## 7. Route transition
 

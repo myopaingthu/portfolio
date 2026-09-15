@@ -14,13 +14,13 @@ export default function ContactPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-10">
       <header className="border-b border-hairline pb-16">
-        <Eyebrow className="mb-8">contact — the direct line</Eyebrow>
-        <h1 className="max-w-[14ch] text-display font-semibold text-paper-0">
+        <Eyebrow className="mb-8" data-hero-reveal>contact — the direct line</Eyebrow>
+        <h1 className="max-w-[14ch] text-display font-semibold text-paper-0" data-hero-reveal>
           No forms.
           <br />
           No funnels.
         </h1>
-        <p className="mt-8 max-w-[48ch] text-[16px] leading-[1.7] text-paper-1">
+        <p className="mt-8 max-w-[48ch] text-[16px] leading-[1.7] text-paper-1" data-hero-reveal>
           Two plain sentences beat a brief. Tell me what is broken, or what you are
           building, and I will tell you straight whether I am the right person for it.
         </p>

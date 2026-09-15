@@ -12,8 +12,8 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-10">
       <header className="border-b border-hairline pb-16">
-        <Eyebrow className="mb-8">about — the operator</Eyebrow>
-        <h1 className="max-w-[16ch] text-display font-semibold text-paper-0">
+        <Eyebrow className="mb-8" data-hero-reveal>about — the operator</Eyebrow>
+        <h1 className="max-w-[16ch] text-display font-semibold text-paper-0" data-hero-reveal>
           One person.
           <br />
           Whole stack.
