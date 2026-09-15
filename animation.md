@@ -398,7 +398,58 @@ Implementation notes that matter:
 On the reference this is per-visitor: each connected reader gets a blob, synced over Supabase
 Realtime, hence `05 OTHER READERS ON THIS PAGE - THE MOTES ARE THEIR CURSORS`.
 
-### 6.3 Renderer
+### 6.3 Mote size — WebGPU will not render sized points
+
+**WebGPU's point-list topology renders 1-pixel points only.** There is no `gl_PointSize`
+equivalent, so `sizeNode` on `THREE.Points` under `WebGPURenderer` is silently a no-op: raising it
+changes nothing (and in practice measured *smaller*, since the only variation left is
+antialiasing). A field built on `THREE.Points` can never be anything but 1px static.
+
+The reference renders each particle as an **instanced sprite** — hence `SpriteNodeMaterial` and
+`InstancedBufferGeometry` in its bundle:
+
+```js
+const material = new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false,
+                                                depthTest: false, blending: THREE.AdditiveBlending });
+material.positionNode = positions.element(instanceIndex);   // instanceIndex, not vertexIndex
+material.scaleNode = sizeInPixels.mul(worldPerPixel);       // scaleNode is in WORLD units
+const sprites = new THREE.Sprite(material);
+sprites.count = count;
+```
+
+Measured mote geometry (horizontal run-length of lit pixels, threshold 45):
+
+```
+                    median   mean   coverage   mean lit luminance
+cursor blob            4px   5.1px     28%           114
+ambient band           2px   3.0px     43%            58
+```
+
+The blob's motes are twice the size of the band's and twice as bright, and there are roughly half
+as many of them. The two populations need **separate size and alpha**, keyed off the role flag —
+sharing one size node makes the band a solid mass whenever the blob looks right.
+
+### 6.4 Deformation is squash-and-bulge, not contraction
+
+Tracking blob width and height through a gesture shows the size barely changes; the brightness
+does almost all the work:
+
+```
+            width   height   mean luminance
+at rest      ~200      ~80        ~82
+in motion    ~180      ~95       ~175
+```
+
+It compresses ~10% along the direction of travel and expands ~20% perpendicular — a squash — while
+luminance roughly doubles. A uniform contraction is wrong and reads as the blob imploding: scaling
+the offset radius to 0.3 collapses it to a quarter of its area and blows it to solid white, which
+is the single most obvious tell that it is not the reference.
+
+Speed must also ease in, not snap. Taking `max(speed, instantaneous)` jumps to full deformation on
+the first pointer event; lerping toward the target (~0.16 per frame) makes the transition read as
+continuous.
+
+### 6.5 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.

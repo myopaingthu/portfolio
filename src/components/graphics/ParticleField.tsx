@@ -22,7 +22,6 @@ import {
   vec2,
   vec3,
   vec4,
-  vertexIndex,
 } from "three/tsl";
 import { FIELD, buildFieldBuffers, particleCount, supportsField } from "@/lib/particles/config";
 import {
@@ -66,6 +65,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const blobCentre = uniform(new THREE.Vector2(0, -0.6));
     const halfExtent = uniform(new THREE.Vector3(1.86, 1.04, 1));
     const scrollWorld = uniform(0);
+    const pixelToWorld = uniform(0.0023);
     const maskCentres = Array.from({ length: FIELD.maxMasks }, () =>
       uniform(new THREE.Vector3(99, 99, 0))
     );
@@ -79,16 +79,23 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       vec3(home.x.mul(halfExtent.x), home.y.mul(halfExtent.y).add(scrollWorld), home.z);
 
     const blobTargetOf = (home: Element, param: Element) => {
-      const contract = mix(float(1), float(FIELD.blobContract), pointerSpeed);
       const base = vec2(
         home.x.mul(FIELD.blobRadiusX),
         home.y.mul(FIELD.blobRadiusY)
-      ).mul(contract);
+      );
 
       const along = base.x.mul(pointerDir.x).add(base.y.mul(pointerDir.y));
-      const stretched = base.add(
-        pointerDir.mul(along).mul(float(FIELD.blobStretch)).mul(pointerSpeed)
-      );
+      const alongVec = pointerDir.mul(along);
+      const perpVec = base.sub(alongVec);
+
+      const squash = mix(float(1), float(FIELD.blobSquash), pointerSpeed);
+      const bulge = mix(float(1), float(FIELD.blobBulge), pointerSpeed);
+      const trail = pointerDir
+        .mul(along)
+        .mul(float(FIELD.blobStretch))
+        .mul(pointerSpeed);
+
+      const stretched = alongVec.mul(squash).add(perpVec.mul(bulge)).add(trail);
 
       const wander = vec2(
         sin(time.mul(1.7).add(param.x.mul(6.283))),
@@ -161,34 +168,43 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       position.assign(mix(ambientPosition, blobPosition, role));
     })().compute(count);
 
-    const material = new THREE.PointsNodeMaterial({
+    const material = new THREE.SpriteNodeMaterial({
       transparent: true,
       depthWrite: false,
       depthTest: false,
       blending: THREE.AdditiveBlending,
     });
 
-    const param = paramBuffer.element(vertexIndex);
-    const depth = smoothstep(float(-1.6), float(0), positions.element(vertexIndex).z);
-    const blobLift = param.z.mul(pointerSpeed.mul(2.6).sub(0.42)).add(1);
+    const param = paramBuffer.element(instanceIndex);
+    const depth = smoothstep(float(-1.6), float(0), positions.element(instanceIndex).z);
+    const role = param.z;
+    const blobLift = pointerSpeed.mul(1.15).add(0.5);
 
-    material.positionNode = positions.element(vertexIndex);
+    const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
+    const blobAlpha = depth
+      .mul(0.05)
+      .add(0.082)
+      .mul(max(param.y, float(0.55)))
+      .mul(blobLift);
+
+    const ambientSize = mix(float(1.25), float(3.4), param.x);
+    const blobSize = mix(float(1.6), float(4.4), param.x).mul(
+      mix(float(1), float(0.94), pointerSpeed)
+    );
+
+    material.positionNode = positions.element(instanceIndex);
     material.colorNode = vec4(
-      mix(vec3(0.5, 0.53, 0.57), vec3(0.96, 0.97, 0.98), param.x),
-      depth.mul(0.18).add(0.3).mul(max(param.y, float(0.66))).mul(blobLift)
+      mix(vec3(0.52, 0.55, 0.59), vec3(0.97, 0.98, 0.99), param.x),
+      mix(ambientAlpha, blobAlpha, role)
     );
-    material.sizeNode = mix(float(1), float(1.9), param.x).mul(depth.mul(0.3).add(0.8));
+    material.scaleNode = mix(ambientSize, blobSize, role)
+      .mul(depth.mul(0.2).add(0.88))
+      .mul(pixelToWorld);
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setDrawRange(0, count);
-    geometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(new Float32Array(count * 3), 3)
-    );
-
-    const points = new THREE.Points(geometry, material);
-    points.frustumCulled = false;
-    scene.add(points);
+    const sprites = new THREE.Sprite(material);
+    sprites.count = count;
+    sprites.frustumCulled = false;
+    scene.add(sprites);
 
     renderer = new THREE.WebGPURenderer({ canvas, antialias: false, alpha: true });
     renderer.setClearColor(0x0b0c0e, 0);
@@ -201,6 +217,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       const projection = createProjection(rect);
       halfExtent.value.set(projection.halfW, projection.halfH, 1);
       worldPerPixel = projection.worldPerPixel;
+      pixelToWorld.value = projection.worldPerPixel;
       scrollWorld.value = window.scrollY * worldPerPixel;
 
       const targets = maskSelector
@@ -245,6 +262,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     let lastY = 0;
     let lastTime = 0;
     let smoothedSpeed = 0;
+    let targetSpeed = 0;
     let centreInitialised = false;
     let frameTime = 0;
     const centreVelocity = new THREE.Vector2();
@@ -261,10 +279,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
       if (lastTime) {
         const distance = Math.hypot(x - lastX, y - lastY);
-        smoothedSpeed = Math.max(
-          smoothedSpeed,
-          Math.min(1, (distance / elapsed) * 1000 * FIELD.speedRamp)
-        );
+        targetSpeed = Math.min(1, (distance / elapsed) * 1000 * FIELD.speedRamp);
       }
 
       lastX = x;
@@ -305,7 +320,8 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
           frameTime = now;
 
           scrollWorld.value = window.scrollY * worldPerPixel;
-          smoothedSpeed *= FIELD.speedDecay;
+          targetSpeed *= FIELD.speedDecay;
+          smoothedSpeed += (targetSpeed - smoothedSpeed) * FIELD.speedRise;
           pointerSpeed.value = smoothedSpeed;
 
           const centre = blobCentre.value;
@@ -338,7 +354,6 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       window.removeEventListener("scroll", onScroll);
       renderer?.setAnimationLoop(null);
       renderer?.dispose();
-      geometry.dispose();
       material.dispose();
       canvas.remove();
     };
