@@ -1,0 +1,172 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme {
+  --color-ink-0: #0b0c0e;
+  --color-ink-1: #121316;
+  --color-ink-2: #1a1c20;
+
+  --color-paper-0: #fafbfd;
+  --color-paper-1: #ccd1d8;
+  --color-paper-2: #8a919b;
+
+  --color-chrome-hi: #e9ebef;
+  --color-chrome-mid: #aeb4bd;
+  --color-chrome-lo: #6e747d;
+
+  --color-hairline: #f4f5f71a;
+  --color-hairline-strong: #f4f5f72e;
+
+  --color-signal-pos: #8fe3b0;
+  --color-signal-neg: #e3908f;
+  --color-signal-warn: #e3cf8f;
+
+  --font-sans: var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-display: clamp(2.75rem, 1.9rem + 4.6vw, 6rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-editorial: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+  --text-editorial--line-height: 1.15;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.65;
+
+  --text-label: 0.71875rem;
+  --text-label--line-height: 1.3;
+  --text-label--letter-spacing: 0.14em;
+
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-instrument: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --default-transition-duration: 0.15s;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@theme inline {
+  --color-background: var(--color-ink-0);
+  --color-foreground: var(--color-paper-0);
+  --color-card: var(--color-ink-1);
+  --color-card-foreground: var(--color-paper-0);
+  --color-popover: var(--color-ink-1);
+  --color-popover-foreground: var(--color-paper-0);
+  --color-primary: var(--color-paper-0);
+  --color-primary-foreground: var(--color-ink-0);
+  --color-secondary: var(--color-ink-2);
+  --color-secondary-foreground: var(--color-paper-0);
+  --color-muted: var(--color-ink-2);
+  --color-muted-foreground: var(--color-paper-2);
+  --color-accent: var(--color-ink-2);
+  --color-accent-foreground: var(--color-paper-0);
+  --color-destructive: var(--color-signal-neg);
+  --color-border: var(--color-hairline);
+  --color-input: var(--color-hairline-strong);
+  --color-ring: var(--color-chrome-lo);
+  --font-heading: var(--font-sans);
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    background-color: var(--color-ink-0);
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-ink-0 text-paper-1;
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-paper-0);
+    color: var(--color-ink-0);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-chrome-hi);
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+    color: var(--color-paper-2);
+  }
+
+  .grain {
+    position: relative;
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+@layer utilities {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  main {
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .jm-melt main {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  main {
+    transition: none;
+  }
+}
+
+.no-js [data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+@media print {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  canvas,
+  .grain::after {
+    display: none !important;
+  }
+}
