@@ -449,7 +449,40 @@ Speed must also ease in, not snap. Taking `max(speed, instantaneous)` jumps to f
 the first pointer event; lerping toward the target (~0.16 per frame) makes the transition read as
 continuous.
 
-### 6.5 Renderer
+### 6.5 The speed response is gentle, and gated on genuinely fast movement
+
+Sweeping the pointer 430px at four speeds and sampling 190ms in (blob isolated in a text-free
+region, so nothing else contaminates the reading):
+
+```
+gesture     reference                        note
+still       w=116 h=52 lum=111 sat=0%
+slow        w=118 h=58 lum= 95 sat=0%        130 steps - no response at all
+medium      w=126 h=59 lum=115 sat=0%        40 steps  - barely any
+fast        w=120 h=57 lum=130 sat=0.2%      8 steps
+instant     w=113 h=56 lum=142 sat=1%        1 step
+```
+
+Two things to take from this:
+
+- **The blob never saturates.** Peak is 1% of pixels at full white, across every speed. Anything
+  that blows out to a solid mass is wrong.
+- **The response is small and late.** Luminance moves ~1.3x from still to an instantaneous jump,
+  and width/height stay within 113-126 x 52-59 throughout. Ordinary cursor movement barely
+  registers; only a genuinely fast flick does.
+
+A warning about measuring this: driving the pointer with a small number of large steps
+(`mouse.move(x, y, {steps: 3})`) produces velocities no real cursor reaches, and makes the blob
+look far tighter and brighter than it ever does in use. Tuning against that artefact produces a
+blob that slams to full brightness on ordinary movement. Use 40+ steps for anything meant to
+represent normal use.
+
+Direction: the deformation is nearly isotropic. A vertical gesture produces the same wide
+horizontal ellipse as a horizontal one — the width/height ratio holds at ~2.1 in every direction
+and at every speed. The squash along travel and perpendicular bulge are subtle (about 6% and 8%),
+not the dramatic reshaping they first appear to be.
+
+### 6.6 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.

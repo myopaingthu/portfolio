@@ -178,7 +178,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const param = paramBuffer.element(instanceIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(instanceIndex).z);
     const role = param.z;
-    const blobLift = pointerSpeed.mul(1.15).add(0.5);
+    const blobLift = pointerSpeed.mul(0.5).add(0.92);
 
     const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
     const blobAlpha = depth
