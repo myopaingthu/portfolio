@@ -385,6 +385,15 @@ Implementation notes that matter:
   1% of the gap per frame — it never converges. Use a frame-rate-independent exponential follow
   (`mix(position, target, clamp(dt * k, 0, 1))`) for the blob instead.
 - Speed must decay slowly (~0.965 per frame). A fast decay makes the blob disperse mid-gesture.
+- The centre is a **spring, not an ease**. Measured on a 900px jump: barely moves for the first
+  200ms, mid-flight at 500ms, arrives ~900ms with a slight overshoot, settles by 2.5s. A pure
+  exponential ease moves fastest at t=0 and cannot produce that slow start.
+- Brightness at rest must stay low or the additive blend destroys the contrast of any text above
+  it. Measured in the blob core: at rest mean luminance ~48 with 2.9% of pixels over 180; in
+  motion mean ~151 with 44% over 180. The canvas sits *below* the content in z-order, so
+  legibility is governed entirely by how bright the blob is, not by stacking.
+- Motion brightness comes from particle **density**, not per-particle alpha — alpha saturates at
+  1 and raising it further does nothing.
 
 On the reference this is per-visitor: each connected reader gets a blob, synced over Supabase
 Realtime, hence `05 OTHER READERS ON THIS PAGE - THE MOTES ARE THEIR CURSORS`.

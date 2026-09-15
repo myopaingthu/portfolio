@@ -170,7 +170,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
     const param = paramBuffer.element(vertexIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(vertexIndex).z);
-    const blobLift = param.z.mul(pointerSpeed.mul(1.6).add(0.95)).add(1);
+    const blobLift = param.z.mul(pointerSpeed.mul(2.6).sub(0.42)).add(1);
 
     material.positionNode = positions.element(vertexIndex);
     material.colorNode = vec4(
@@ -246,6 +246,8 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     let lastTime = 0;
     let smoothedSpeed = 0;
     let centreInitialised = false;
+    let frameTime = 0;
+    const centreVelocity = new THREE.Vector2();
 
     const onPointerMove = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -273,6 +275,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
       if (!centreInitialised) {
         blobCentre.value.set(x, y);
+        centreVelocity.set(0, 0);
         centreInitialised = true;
       }
     };
@@ -297,6 +300,10 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
         renderer.setAnimationLoop(() => {
           if (disposed || !renderer) return;
+          const now = performance.now();
+          const step = frameTime ? Math.min(0.05, (now - frameTime) / 1000) : 0.016;
+          frameTime = now;
+
           scrollWorld.value = window.scrollY * worldPerPixel;
           smoothedSpeed *= FIELD.speedDecay;
           pointerSpeed.value = smoothedSpeed;
@@ -306,7 +313,15 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
           const chaseY = pointer.value.y - centre.y;
           const chase = Math.hypot(chaseX, chaseY);
           if (chase > 1e-5) pointerDir.value.set(chaseX / chase, chaseY / chase);
-          centre.set(centre.x + chaseX * FIELD.blobLag, centre.y + chaseY * FIELD.blobLag);
+
+          centreVelocity.x +=
+            (chaseX * FIELD.centreStiffness - centreVelocity.x * FIELD.centreDamping) * step;
+          centreVelocity.y +=
+            (chaseY * FIELD.centreStiffness - centreVelocity.y * FIELD.centreDamping) * step;
+          centre.set(
+            centre.x + centreVelocity.x * step,
+            centre.y + centreVelocity.y * step
+          );
           renderer.compute(update);
           renderer.render(scene, camera);
         });
