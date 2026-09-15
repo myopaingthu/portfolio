@@ -11,13 +11,16 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-10">
-      <header className="border-b border-hairline pb-16">
+      <header className="flex min-h-[calc(100svh-64px)] flex-col justify-center border-b border-hairline pb-[30vh]">
         <Eyebrow className="mb-8" data-hero-reveal>about — the operator</Eyebrow>
-        <h1 className="max-w-[16ch] text-display font-semibold text-paper-0" data-hero-reveal>
+        <h1 className="max-w-[16ch] text-display font-semibold text-paper-0" data-hero-reveal data-field-mask>
           One person.
           <br />
           Whole stack.
         </h1>
+        <p className="label-mono mt-12" data-hero-reveal data-field-mask>
+          in practice since 2021 · bangkok · remote across time zones
+        </p>
       </header>
 
       <section className="grid gap-12 border-b border-hairline py-16 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-20">

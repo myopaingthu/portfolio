@@ -19,6 +19,7 @@ import {
   smoothstep,
   time,
   uniform,
+  vec2,
   vec3,
   vec4,
   vertexIndex,
@@ -60,7 +61,11 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
     const pointer = uniform(new THREE.Vector3(0, -0.6, 0));
     const pointerActive = uniform(0);
+    const pointerDir = uniform(new THREE.Vector2(1, 0));
+    const pointerSpeed = uniform(0);
+    const blobCentre = uniform(new THREE.Vector2(0, -0.6));
     const halfExtent = uniform(new THREE.Vector3(1.86, 1.04, 1));
+    const scrollWorld = uniform(0);
     const maskCentres = Array.from({ length: FIELD.maxMasks }, () =>
       uniform(new THREE.Vector3(99, 99, 0))
     );
@@ -68,22 +73,39 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       uniform(new THREE.Vector3(0.001, 0.001, 0))
     );
 
-    const ambientHomeOf = (home: ReturnType<typeof homeBuffer.element>) =>
-      vec3(home.x.mul(halfExtent.x), home.y.mul(halfExtent.y), home.z);
+    type Element = ReturnType<typeof homeBuffer.element>;
 
-    const blobTargetOf = (home: ReturnType<typeof homeBuffer.element>) =>
-      vec3(
-        pointer.x.add(home.x.mul(FIELD.blobRadiusX)),
-        pointer.y.add(home.y.mul(FIELD.blobRadiusY)),
-        home.z
+    const ambientHomeOf = (home: Element) =>
+      vec3(home.x.mul(halfExtent.x), home.y.mul(halfExtent.y).add(scrollWorld), home.z);
+
+    const blobTargetOf = (home: Element, param: Element) => {
+      const contract = mix(float(1), float(FIELD.blobContract), pointerSpeed);
+      const base = vec2(
+        home.x.mul(FIELD.blobRadiusX),
+        home.y.mul(FIELD.blobRadiusY)
+      ).mul(contract);
+
+      const along = base.x.mul(pointerDir.x).add(base.y.mul(pointerDir.y));
+      const stretched = base.add(
+        pointerDir.mul(along).mul(float(FIELD.blobStretch)).mul(pointerSpeed)
       );
+
+      const wander = vec2(
+        sin(time.mul(1.7).add(param.x.mul(6.283))),
+        cos(time.mul(1.3).add(param.y.mul(6.283)))
+      )
+        .mul(float(FIELD.blobJitter))
+        .mul(float(1).sub(pointerSpeed.mul(0.85)));
+
+      return vec3(blobCentre.add(stretched).add(wander), home.z);
+    };
 
     const init = Fn(() => {
       const home = homeBuffer.element(instanceIndex);
-      const role = paramBuffer.element(instanceIndex).z;
+      const param = paramBuffer.element(instanceIndex);
       positions
         .element(instanceIndex)
-        .assign(mix(ambientHomeOf(home), blobTargetOf(home), role));
+        .assign(mix(ambientHomeOf(home), blobTargetOf(home, param), param.z));
       velocities.element(instanceIndex).assign(vec3(0));
     })().compute(count);
 
@@ -97,21 +119,16 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       const dt = clamp(deltaTime, float(0), float(0.04));
       const phase = time.mul(0.3).add(param.x.mul(6.283));
 
-      const ambientHome = ambientHomeOf(home);
       const drift = vec3(
         sin(phase.add(position.y.mul(2.1))),
         cos(phase.mul(0.7).add(position.x.mul(1.7))).mul(0.55),
         float(0)
       ).mul(FIELD.drift);
 
-      let ambientForce = ambientHome
-        .sub(position)
-        .mul(FIELD.homePull)
-        .add(drift);
+      let ambientForce = ambientHomeOf(home).sub(position).mul(FIELD.homePull).add(drift);
 
       const toPointer = position.sub(pointer);
-      const distance = length(toPointer.xy);
-      const falloff = smoothstep(float(FIELD.pointerRadius), float(0), distance);
+      const falloff = smoothstep(float(FIELD.pointerRadius), float(0), length(toPointer.xy));
       ambientForce = ambientForce.add(
         normalize(vec3(toPointer.xy, 0.001))
           .mul(falloff)
@@ -130,11 +147,18 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
         );
       }
 
-      const blobForce = blobTargetOf(home).sub(position).mul(FIELD.blobStiffness);
+      velocity.addAssign(ambientForce.mul(dt));
+      velocity.mulAssign(float(FIELD.ambientDamping));
+      const ambientPosition = position.add(velocity.mul(dt));
 
-      velocity.addAssign(mix(ambientForce, blobForce, role).mul(dt));
-      velocity.mulAssign(mix(float(FIELD.ambientDamping), float(FIELD.blobDamping), role));
-      position.addAssign(velocity.mul(dt));
+      const follow = clamp(
+        dt.mul(float(FIELD.blobFollow)).mul(param.y.mul(0.4).add(0.8)),
+        float(0),
+        float(1)
+      );
+      const blobPosition = mix(position, blobTargetOf(home, param), follow);
+
+      position.assign(mix(ambientPosition, blobPosition, role));
     })().compute(count);
 
     const material = new THREE.PointsNodeMaterial({
@@ -146,7 +170,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
     const param = paramBuffer.element(vertexIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(vertexIndex).z);
-    const blobLift = param.z.mul(0.4).add(1);
+    const blobLift = param.z.mul(pointerSpeed.mul(1.6).add(0.95)).add(1);
 
     material.positionNode = positions.element(vertexIndex);
     material.colorNode = vec4(
@@ -169,11 +193,15 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     renderer = new THREE.WebGPURenderer({ canvas, antialias: false, alpha: true });
     renderer.setClearColor(0x0b0c0e, 0);
 
+    let worldPerPixel = 0.0023;
+
     const syncLayout = () => {
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const projection = createProjection(rect);
       halfExtent.value.set(projection.halfW, projection.halfH, 1);
+      worldPerPixel = projection.worldPerPixel;
+      scrollWorld.value = window.scrollY * worldPerPixel;
 
       const targets = maskSelector
         ? Array.from(document.querySelectorAll<HTMLElement>(maskSelector)).slice(
@@ -199,6 +227,10 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       }
     };
 
+    const onScroll = () => {
+      scrollWorld.value = window.scrollY * worldPerPixel;
+    };
+
     const resize = () => {
       const rect = host.getBoundingClientRect();
       if (!rect.width || !rect.height || !renderer) return;
@@ -209,16 +241,40 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       syncLayout();
     };
 
+    let lastX = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let smoothedSpeed = 0;
+    let centreInitialised = false;
+
     const onPointerMove = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const projection = createProjection(rect);
-      pointer.value.set(
-        projection.toWorldX(event.clientX),
-        projection.toWorldY(event.clientY),
-        0
-      );
+      const x = projection.toWorldX(event.clientX);
+      const y = projection.toWorldY(event.clientY);
+
+      const now = performance.now();
+      const elapsed = Math.max(1, now - lastTime);
+
+      if (lastTime) {
+        const distance = Math.hypot(x - lastX, y - lastY);
+        smoothedSpeed = Math.max(
+          smoothedSpeed,
+          Math.min(1, (distance / elapsed) * 1000 * FIELD.speedRamp)
+        );
+      }
+
+      lastX = x;
+      lastY = y;
+      lastTime = now;
+      pointer.value.set(x, y, 0);
       pointerActive.value = 1;
+
+      if (!centreInitialised) {
+        blobCentre.value.set(x, y);
+        centreInitialised = true;
+      }
     };
 
     const onPointerLeave = () => {
@@ -237,10 +293,20 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
         resizeObserver.observe(host);
         window.addEventListener("pointermove", onPointerMove, { passive: true });
         window.addEventListener("pointerleave", onPointerLeave, { passive: true });
-        window.addEventListener("scroll", syncLayout, { passive: true });
+        window.addEventListener("scroll", onScroll, { passive: true });
 
         renderer.setAnimationLoop(() => {
           if (disposed || !renderer) return;
+          scrollWorld.value = window.scrollY * worldPerPixel;
+          smoothedSpeed *= FIELD.speedDecay;
+          pointerSpeed.value = smoothedSpeed;
+
+          const centre = blobCentre.value;
+          const chaseX = pointer.value.x - centre.x;
+          const chaseY = pointer.value.y - centre.y;
+          const chase = Math.hypot(chaseX, chaseY);
+          if (chase > 1e-5) pointerDir.value.set(chaseX / chase, chaseY / chase);
+          centre.set(centre.x + chaseX * FIELD.blobLag, centre.y + chaseY * FIELD.blobLag);
           renderer.compute(update);
           renderer.render(scene, camera);
         });
@@ -254,7 +320,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       resizeObserver?.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerleave", onPointerLeave);
-      window.removeEventListener("scroll", syncLayout);
+      window.removeEventListener("scroll", onScroll);
       renderer?.setAnimationLoop(null);
       renderer?.dispose();
       geometry.dispose();
@@ -267,7 +333,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     <div
       ref={hostRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
     />
   );
 }

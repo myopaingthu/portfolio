@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { HeroField } from "@/components/graphics/HeroField";
 import { MagneticCard } from "@/components/interactions/MagneticCard";
 import { IndexRow } from "@/components/editorial/IndexRow";
 import { Eyebrow } from "@/components/editorial/Eyebrow";
@@ -12,7 +11,6 @@ export default function Home() {
   return (
     <>
       <section className="relative border-b border-hairline">
-        <HeroField />
         <div className="relative mx-auto flex min-h-[calc(100svh-64px)] max-w-[1440px] flex-col justify-center px-6 py-20 md:px-10">
           <p className="mb-8 text-[13px] tracking-[0.015em] text-paper-1" data-hero-reveal>
             {site.name} / {site.role}

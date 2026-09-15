@@ -362,9 +362,29 @@ its home position afterwards.
 
 ### 6.2 Cursor blob
 
-A dense elliptical cluster, roughly **190 x 85 px**, that tracks the pointer anywhere in the hero
-with a spring lag, leaving a brief wake. Measured centred exactly on the pointer at rest
-(pointer 1300,760 -> blob 1300,770).
+A cluster that tracks the pointer anywhere on the page, at any scroll position. Its shape is
+**driven by pointer speed**, and the direction is the opposite of what you would guess:
+
+```
+at rest     diffuse, dim, loose scatter of individual motes   ~200 x 80 px
+in motion   tight, bright, blown-out core, elongated along
+            the direction of travel                           ~180 x 95 px
+```
+
+Motion *concentrates* the blob; rest *disperses* it.
+
+The mechanism is not a soft spring onto the live pointer — that produces a smear along the path.
+It is a **tight clump bound to a lagging centre**: the centre eases toward the pointer at roughly
+5% of the gap per frame (so it trails a long way, measured ~730px behind during a fast sweep),
+while the particles hold formation tightly around that centre.
+
+Implementation notes that matter:
+
+- Integrating force -> velocity -> position multiplies by `dt` twice, so displacement scales with
+  `dt^2`. At 120fps that is 6.4e-5, and a spring stiffness in the tens moves a particle well under
+  1% of the gap per frame — it never converges. Use a frame-rate-independent exponential follow
+  (`mix(position, target, clamp(dt * k, 0, 1))`) for the blob instead.
+- Speed must decay slowly (~0.965 per frame). A fast decay makes the blob disperse mid-gesture.
 
 On the reference this is per-visitor: each connected reader gets a blob, synced over Supabase
 Realtime, hence `05 OTHER READERS ON THIS PAGE - THE MOTES ARE THEIR CURSORS`.

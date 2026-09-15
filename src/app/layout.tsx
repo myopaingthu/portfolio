@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { HeroField } from "@/components/graphics/HeroField";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { RouteTransition } from "@/components/motion/RouteTransition";
 import { Header } from "@/components/shell/Header";
@@ -33,9 +34,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="grain flex min-h-full flex-col bg-ink-0">
         <MotionProvider>
           <RouteTransition />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <HeroField />
+          <div className="relative z-10 flex min-h-full flex-1 flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </MotionProvider>
       </body>
     </html>
