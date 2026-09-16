@@ -518,7 +518,41 @@ strike 3   halve the sprite count
 Both post-processing chains are built up front and swapped by reference, so degrading costs
 nothing at the moment it happens.
 
-### 6.8 Renderer
+### 6.8 The ellipse rotates — test with a curved path, not a straight one
+
+Straight-line sweeps cannot reveal this, which is why it went unnoticed for several rounds. Driving
+the pointer around a circle and sampling through the second lap shows the blob's principal axis
+turning continuously:
+
+```
+frame   tilt     elongation
+  0     +3.3deg     2.03
+  3     -3.8deg     2.02
+  6     -6.4deg     1.98
+  8     -7.6deg     1.72
+```
+
+The major axis tracks the direction of travel, but only **partially** — it stays broadly horizontal
+and tilts within roughly +/-8 degrees over a full 360-degree sweep of the pointer, rather than
+spinning with it. Elongation breathes between about 1.7 and 2.1 at the same time.
+
+Two implementation traps here:
+
+- Blending an axis-aligned ellipse with a velocity-aligned one **destroys the elongation**: when
+  the two frames are perpendicular the blend is a circle (measured 1.07). Use a real partial
+  rotation instead — `normalize(mix(vec2(1,0), dir, amount))` as the frame's basis — which is a
+  pure rotation and preserves the axis ratio.
+- The ellipse is 180-degree symmetric, so fold the direction into one half-plane (negate when
+  `dir.x < 0`) before building that frame. Otherwise the blend passes through zero near
+  `dir = (-1, 0)` and the rotation becomes unstable.
+
+Brightness, meanwhile, is close to flat. Across a still pointer, slow, medium, fast and
+instantaneous gestures, and around a sustained circular path, the reference stays within roughly
+**89-142** mean luminance in the blob core. Neither pointer speed nor chase distance drives it
+much; both stay pinned high during continuous circular motion while the reference stays dim. Treat
+the glow as rare rather than as the normal state of the blob.
+
+### 6.9 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.

@@ -17,6 +17,7 @@ import {
   max,
   mix,
   normalize,
+  pow,
   sin,
   smoothstep,
   time,
@@ -64,6 +65,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const pointerActive = uniform(0);
     const pointerDir = uniform(new THREE.Vector2(1, 0));
     const pointerSpeed = uniform(0);
+    const pointerChase = uniform(0);
     const blobCentre = uniform(new THREE.Vector2(0, -0.6));
     const halfExtent = uniform(new THREE.Vector3(1.86, 1.04, 1));
     const scrollWorld = uniform(0);
@@ -86,18 +88,24 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
         home.y.mul(FIELD.blobRadiusY)
       );
 
-      const along = base.x.mul(pointerDir.x).add(base.y.mul(pointerDir.y));
-      const alongVec = pointerDir.mul(along);
-      const perpVec = base.sub(alongVec);
-
       const squash = mix(float(1), float(FIELD.blobSquash), pointerSpeed);
       const bulge = mix(float(1), float(FIELD.blobBulge), pointerSpeed);
-      const trail = pointerDir
-        .mul(along)
+
+      const partialDir = normalize(
+        mix(vec2(1, 0), pointerDir, pointerSpeed.mul(float(FIELD.blobAlign)))
+      );
+      const partialPerp = vec2(partialDir.y.negate(), partialDir.x);
+
+      const aligned = partialDir
+        .mul(base.x.mul(squash))
+        .add(partialPerp.mul(base.y.mul(bulge)));
+
+      const trail = partialDir
+        .mul(base.x)
         .mul(float(FIELD.blobStretch))
         .mul(pointerSpeed);
 
-      const stretched = alongVec.mul(squash).add(perpVec.mul(bulge)).add(trail);
+      const stretched = aligned.add(trail);
 
       const wander = vec2(
         sin(time.mul(1.7).add(param.x.mul(6.283))),
@@ -161,7 +169,9 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       const ambientPosition = position.add(velocity.mul(dt));
 
       const follow = clamp(
-        dt.mul(float(FIELD.blobFollow)).mul(param.y.mul(0.4).add(0.8)),
+        dt
+          .mul(float(FIELD.blobFollow))
+          .mul(param.y.mul(float(FIELD.blobFollowSpread)).add(0.55)),
         float(0),
         float(1)
       );
@@ -180,7 +190,8 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const param = paramBuffer.element(instanceIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(instanceIndex).z);
     const role = param.z;
-    const blobLift = pointerSpeed.mul(1.7).add(0.88);
+    const flare = pow(pointerChase, float(2));
+    const blobLift = flare.mul(0.62).add(0.72);
 
     const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
     const blobAlpha = depth
@@ -349,7 +360,19 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
           const chaseX = pointer.value.x - centre.x;
           const chaseY = pointer.value.y - centre.y;
           const chase = Math.hypot(chaseX, chaseY);
-          if (chase > 1e-5) pointerDir.value.set(chaseX / chase, chaseY / chase);
+          pointerChase.value = Math.min(1, chase / FIELD.chaseFullWorld);
+          if (chase > 0.012) {
+            const flip = chaseX < 0 ? -1 : 1;
+            const targetX = (chaseX / chase) * flip;
+            const targetY = (chaseY / chase) * flip;
+            const dir = pointerDir.value;
+            dir.set(
+              dir.x + (targetX - dir.x) * FIELD.dirSmoothing,
+              dir.y + (targetY - dir.y) * FIELD.dirSmoothing
+            );
+            const len = Math.hypot(dir.x, dir.y) || 1;
+            dir.set(dir.x / len, dir.y / len);
+          }
 
           centreVelocity.x +=
             (chaseX * FIELD.centreStiffness - centreVelocity.x * FIELD.centreDamping) * step;
