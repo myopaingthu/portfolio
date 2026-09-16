@@ -552,7 +552,57 @@ instantaneous gestures, and around a sustained circular path, the reference stay
 much; both stay pinned high during continuous circular motion while the reference stays dim. Treat
 the glow as rare rather than as the normal state of the blob.
 
-### 6.9 Renderer
+### 6.9 Blob simulation — per-particle physics, not a lerp onto a shape
+
+The blob is a swarm under real forces. Each particle is a damped spring pulled toward its own
+anchor inside the swarm; the swarm's centre is a second, slower spring pulled toward the pointer.
+Both are underdamped, which is what produces inertia and overshoot.
+
+```
+centre    omega ~3.6 rad/s, zeta ~0.55   (k = 13, c = 4)
+particle  omega ~9.5 rad/s, zeta ~0.52, spread 0.75-1.25x per particle
+```
+
+Anchors are built in a frame aligned to travel:
+
+```
+along  = home.x * radius * (1 + speed * elongate)     elongate 2.4
+across = home.y * radius * (1 - speed * narrow)       narrow   0.45
+tail   = -dir * speed * tailLength * (1 - particleLag)
+```
+
+`home` is a point on the **unit disc**, so at rest the swarm is circular; elongation only appears
+with speed. The tail falls out of per-particle lag: slower particles sit further back, so the swarm
+smears behind itself in proportion to speed. Low-amplitude sin/cos turbulence keeps the edge
+organic.
+
+**Calibrating speed is the step that decides whether any of this reads.** Speed is normalised
+pointer velocity, and if the scale saturates at walking pace every gesture looks like a flick. At
+`speedRamp 1.15` a slow drag already pinned speed at 1.0 and produced *more* elongation than a fast
+flick, because the flick was sampled before the swarm had caught up. The working scale is ~0.13,
+which puts an ordinary drag near 0.25 and a flick near 1.0.
+
+Measured behaviour (blob isolated in a verified-empty region):
+
+```
+stationary   60 x 58   elongation 1.05
+slow drag    77 x 49   elongation 1.58
+fast flick  109 x 41   elongation 2.64   plus a visible particle tail
+regrouped    67 x 61   elongation 1.10
+```
+
+Overshoot, moving to a target and holding:
+
+```
+944 -> 1066 -> 1197 -> 1296 -> 1340 -> 1344 peak -> 1330 -> 1313 -> 1300 -> 1292 settled
+target 1300, peak 1344, overshoot 52px
+```
+
+A note on integration: force -> velocity -> position multiplies by `dt` twice, so spring constants
+are `omega^2` and `2 * zeta * omega`, not small hand-picked numbers. Stiffness in the tens with an
+explicit `dt` step moves a particle a fraction of a percent per frame and never converges.
+
+### 6.10 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.

@@ -65,7 +65,6 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const pointerActive = uniform(0);
     const pointerDir = uniform(new THREE.Vector2(1, 0));
     const pointerSpeed = uniform(0);
-    const pointerChase = uniform(0);
     const blobCentre = uniform(new THREE.Vector2(0, -0.6));
     const halfExtent = uniform(new THREE.Vector3(1.86, 1.04, 1));
     const scrollWorld = uniform(0);
@@ -83,38 +82,45 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       vec3(home.x.mul(halfExtent.x), home.y.mul(halfExtent.y).add(scrollWorld), home.z);
 
     const blobTargetOf = (home: Element, param: Element) => {
-      const base = vec2(
-        home.x.mul(FIELD.blobRadiusX),
-        home.y.mul(FIELD.blobRadiusY)
-      );
+      const perpDir = vec2(pointerDir.y.negate(), pointerDir.x);
+      const radius = float(FIELD.blobRadius);
 
-      const squash = mix(float(1), float(FIELD.blobSquash), pointerSpeed);
-      const bulge = mix(float(1), float(FIELD.blobBulge), pointerSpeed);
+      const along = home.x
+        .mul(radius)
+        .mul(float(1).add(pointerSpeed.mul(float(FIELD.blobElongate))));
+      const across = home.y
+        .mul(radius)
+        .mul(float(1).sub(pointerSpeed.mul(float(FIELD.blobNarrow))));
 
-      const partialDir = normalize(
-        mix(vec2(1, 0), pointerDir, pointerSpeed.mul(float(FIELD.blobAlign)))
-      );
-      const partialPerp = vec2(partialDir.y.negate(), partialDir.x);
+      const lag = float(1).sub(param.y);
+      const tail = pointerDir
+        .mul(pointerSpeed)
+        .mul(float(FIELD.blobTail))
+        .mul(lag)
+        .negate();
 
-      const aligned = partialDir
-        .mul(base.x.mul(squash))
-        .add(partialPerp.mul(base.y.mul(bulge)));
+      const turbulence = vec2(
+        sin(
+          time
+            .mul(float(FIELD.blobNoiseFreq))
+            .add(param.x.mul(6.283))
+            .add(home.y.mul(3.1))
+        ),
+        cos(
+          time
+            .mul(float(FIELD.blobNoiseFreq * 0.83))
+            .add(param.y.mul(6.283))
+            .add(home.x.mul(2.7))
+        )
+      ).mul(float(FIELD.blobNoiseAmp));
 
-      const trail = partialDir
-        .mul(base.x)
-        .mul(float(FIELD.blobStretch))
-        .mul(pointerSpeed);
+      const offset = pointerDir
+        .mul(along)
+        .add(perpDir.mul(across))
+        .add(tail)
+        .add(turbulence);
 
-      const stretched = aligned.add(trail);
-
-      const wander = vec2(
-        sin(time.mul(1.7).add(param.x.mul(6.283))),
-        cos(time.mul(1.3).add(param.y.mul(6.283)))
-      )
-        .mul(float(FIELD.blobJitter))
-        .mul(float(1).sub(pointerSpeed.mul(0.85)));
-
-      return vec3(blobCentre.add(stretched).add(wander), home.z);
+      return vec3(blobCentre.add(offset), home.z);
     };
 
     const init = Fn(() => {
@@ -133,7 +139,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       const param = paramBuffer.element(instanceIndex);
       const role = param.z;
 
-      const dt = clamp(deltaTime, float(0), float(0.04));
+      const dt = clamp(deltaTime, float(0), float(0.033));
       const phase = time.mul(0.3).add(param.x.mul(6.283));
 
       const drift = vec3(
@@ -164,20 +170,17 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
         );
       }
 
-      velocity.addAssign(ambientForce.mul(dt));
-      velocity.mulAssign(float(FIELD.ambientDamping));
-      const ambientPosition = position.add(velocity.mul(dt));
-
-      const follow = clamp(
-        dt
-          .mul(float(FIELD.blobFollow))
-          .mul(param.y.mul(float(FIELD.blobFollowSpread)).add(0.55)),
-        float(0),
-        float(1)
+      const omega = float(FIELD.blobFreq).mul(
+        param.y.mul(float(FIELD.blobFreqSpread)).add(1 - FIELD.blobFreqSpread / 2)
       );
-      const blobPosition = mix(position, blobTargetOf(home, param), follow);
+      const blobForce = blobTargetOf(home, param)
+        .sub(position)
+        .mul(omega.mul(omega))
+        .sub(velocity.mul(omega.mul(2 * FIELD.blobDampingRatio)));
 
-      position.assign(mix(ambientPosition, blobPosition, role));
+      velocity.addAssign(mix(ambientForce, blobForce, role).mul(dt));
+      velocity.mulAssign(mix(float(FIELD.ambientDamping), float(1), role));
+      position.addAssign(velocity.mul(dt));
     })().compute(count);
 
     const material = new THREE.SpriteNodeMaterial({
@@ -190,7 +193,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const param = paramBuffer.element(instanceIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(instanceIndex).z);
     const role = param.z;
-    const flare = pow(pointerChase, float(2));
+    const flare = pow(pointerSpeed, float(2));
     const blobLift = flare.mul(0.62).add(0.72);
 
     const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
@@ -360,11 +363,9 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
           const chaseX = pointer.value.x - centre.x;
           const chaseY = pointer.value.y - centre.y;
           const chase = Math.hypot(chaseX, chaseY);
-          pointerChase.value = Math.min(1, chase / FIELD.chaseFullWorld);
           if (chase > 0.012) {
-            const flip = chaseX < 0 ? -1 : 1;
-            const targetX = (chaseX / chase) * flip;
-            const targetY = (chaseY / chase) * flip;
+            const targetX = chaseX / chase;
+            const targetY = chaseY / chase;
             const dir = pointerDir.value;
             dir.set(
               dir.x + (targetX - dir.x) * FIELD.dirSmoothing,
