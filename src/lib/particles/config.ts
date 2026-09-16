@@ -20,6 +20,16 @@ export const FIELD = {
   speedRise: 0.14,
   dirSmoothing: 0.11,
 
+  spinFull: 5.5,
+  spinRise: 0.07,
+  spinDecay: 0.986,
+  spinTorque: 9.5,
+  spinPush: 2.6,
+  spinCore: 0.055,
+  spinLoosen: 0.3,
+  spinDistanceLag: 5.5,
+  spinDrag: 0.55,
+
   bandCentre: 0.855,
   bandSpread: 0.062,
   bandMin: 0.735,

@@ -17,6 +17,7 @@ import {
   max,
   mix,
   normalize,
+  sign,
   pow,
   sin,
   smoothstep,
@@ -65,6 +66,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const pointerActive = uniform(0);
     const pointerDir = uniform(new THREE.Vector2(1, 0));
     const pointerSpeed = uniform(0);
+    const pointerSpin = uniform(0);
     const blobCentre = uniform(new THREE.Vector2(0, -0.6));
     const halfExtent = uniform(new THREE.Vector3(1.86, 1.04, 1));
     const scrollWorld = uniform(0);
@@ -173,10 +175,39 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
       const omega = float(FIELD.blobFreq).mul(
         param.y.mul(float(FIELD.blobFreqSpread)).add(1 - FIELD.blobFreqSpread / 2)
       );
+
+      const fromCentre = position.xy.sub(blobCentre);
+      const spread = length(fromCentre);
+      const radial = fromCentre.div(max(spread, float(0.0008)));
+      const tangent = vec2(radial.y.negate(), radial.x).mul(sign(pointerSpin));
+      const spin = abs(pointerSpin);
+
+      const orbit = tangent
+        .mul(float(FIELD.spinTorque))
+        .mul(spin)
+        .mul(smoothstep(float(0), float(FIELD.spinCore), spread));
+
+      const centrifugal = radial
+        .mul(float(FIELD.spinPush))
+        .mul(spin)
+        .mul(spread.div(float(FIELD.blobRadius)));
+
+      const grip = mix(float(1), float(FIELD.spinLoosen), spin).div(
+        spread.mul(float(FIELD.spinDistanceLag)).mul(spin).add(1)
+      );
+
       const blobForce = blobTargetOf(home, param)
         .sub(position)
         .mul(omega.mul(omega))
-        .sub(velocity.mul(omega.mul(2 * FIELD.blobDampingRatio)));
+        .mul(grip)
+        .sub(
+          velocity.mul(
+            omega
+              .mul(2 * FIELD.blobDampingRatio)
+              .mul(mix(float(1), float(FIELD.spinDrag), spin))
+          )
+        )
+        .add(vec3(orbit.add(centrifugal), float(0)));
 
       velocity.addAssign(mix(ambientForce, blobForce, role).mul(dt));
       velocity.mulAssign(mix(float(FIELD.ambientDamping), float(1), role));
@@ -297,6 +328,9 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     let lastY = 0;
     let lastTime = 0;
     let smoothedSpeed = 0;
+    let angular = 0;
+    let prevDirX = 1;
+    let prevDirY = 0;
     let targetSpeed = 0;
     let centreInitialised = false;
     let frameTime = 0;
@@ -358,6 +392,17 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
           targetSpeed *= FIELD.speedDecay;
           smoothedSpeed += (targetSpeed - smoothedSpeed) * FIELD.speedRise;
           pointerSpeed.value = smoothedSpeed;
+
+          const dirNow = pointerDir.value;
+          const turn = prevDirX * dirNow.y - prevDirY * dirNow.x;
+          prevDirX = dirNow.x;
+          prevDirY = dirNow.y;
+          angular += (turn / Math.max(step, 1e-4) - angular) * FIELD.spinRise;
+          angular *= FIELD.spinDecay;
+          pointerSpin.value = Math.max(
+            -1,
+            Math.min(1, (angular / FIELD.spinFull) * smoothedSpeed)
+          );
 
           const centre = blobCentre.value;
           const chaseX = pointer.value.x - centre.x;

@@ -602,7 +602,52 @@ A note on integration: force -> velocity -> position multiplies by `dt` twice, s
 are `omega^2` and `2 * zeta * omega`, not small hand-picked numbers. Stiffness in the tens with an
 explicit `dt` step moves a particle a fraction of a percent per frame and never converges.
 
-### 6.10 Renderer
+### 6.10 Vortex — angular momentum under circular movement
+
+Linear speed and direction alone cannot produce a vortex. With anchors built in a frame that
+rotates with travel, the swarm rotates *rigidly* and can never lag into an arc. Rotation needs its
+own state: the signed angular velocity of the travel direction.
+
+```js
+const turn = prevDir.x * dir.y - prevDir.y * dir.x;   // 2D cross product = sin of the turn
+angular += (turn / step - angular) * spinRise;        // build over ~14 frames
+angular *= spinDecay;                                 // 0.986/frame, momentum outlives the gesture
+spin = clamp(angular / spinFull, -1, 1) * speed;      // only counts while actually moving
+```
+
+Three forces then act on each particle, all scaled by `spin`:
+
+```
+orbit        tangent * torque * smoothstep(0, coreRadius, r)   tangential, zero at the centre
+centrifugal  radial  * push   * (r / blobRadius)               outer particles fly wider
+grip         anchorSpring * mix(1, loosen, spin) / (1 + r * lag * spin)
+```
+
+`grip` is what makes it read as fluid rather than rigid: attraction falls off with distance while
+spinning, so particles far from the centre keep their own velocity and trail, while inner particles
+stay tightly held — the dense rotating core. Damping is also reduced while spinning so momentum
+persists.
+
+Measured through sustained circular motion, as an area-normalised radial density profile from core
+to edge:
+
+```
+at rest    r90= 55px   [1.00, 1.00, 1.00, 1.00, 0.99]   flat: a uniform disc
+2 laps     r90=150px   [0.85, 1.26, 1.34, 0.94, 0.62]   interior dip, ring peak: an annulus
+4 laps     r90=197px   [1.47, 1.15, 1.01, 0.82, 0.56]   dense rotating core
+7 laps     r90=186px   [0.92, 1.43, 1.14, 0.87, 0.64]   ring again
+collapsed  r90= 56px   [1.00, 1.00, 1.00, 1.00, 1.00]   flat again
+```
+
+The signature to look for is the **off-centre density peak**: at rest the profile is flat, and under
+rotation the maximum moves outward from bin 0. Both the C-shaped arc and the closed ring appear,
+depending on where in the cycle the swarm is caught.
+
+A caution on measuring this: density binned against the distance to the *centroid* is misleading
+for a C-shape, whose centroid sits in the dense limb rather than the hollow, and `max` radius is
+badly skewed by outliers. Use percentile radii and equal-area annuli.
+
+### 6.11 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.
