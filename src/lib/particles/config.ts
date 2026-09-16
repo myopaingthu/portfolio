@@ -28,6 +28,13 @@ export const FIELD = {
   pointerRadius: 0.36,
   pointerStrength: 3.2,
   maskStrength: 2.4,
+  bloomStrength: 0.35,
+  bloomRadius: 0.3,
+  bloomThreshold: 0.75,
+  maxPixelRatio: 1.5,
+  maxPixelRatioCoarse: 2,
+  slowFrameMs: 34,
+  slowFrameStrikes: 45,
   maxMasks: 6,
 } as const;
 

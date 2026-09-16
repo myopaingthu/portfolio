@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three/webgpu";
+import { pass } from "three/tsl";
+import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import {
   Fn,
   abs,
@@ -178,7 +180,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const param = paramBuffer.element(instanceIndex);
     const depth = smoothstep(float(-1.6), float(0), positions.element(instanceIndex).z);
     const role = param.z;
-    const blobLift = pointerSpeed.mul(0.5).add(0.92);
+    const blobLift = pointerSpeed.mul(1.7).add(0.88);
 
     const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
     const blobAlpha = depth
@@ -208,6 +210,23 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
 
     renderer = new THREE.WebGPURenderer({ canvas, antialias: false, alpha: true });
     renderer.setClearColor(0x0b0c0e, 0);
+
+    const scenePass = pass(scene, camera);
+    const bloomed = new THREE.PostProcessing(renderer);
+    bloomed.outputNode = scenePass.add(
+      bloom(
+        scenePass.getTextureNode(),
+        FIELD.bloomStrength,
+        FIELD.bloomRadius,
+        FIELD.bloomThreshold
+      )
+    );
+    const plain = new THREE.PostProcessing(renderer);
+    plain.outputNode = scenePass;
+
+    let output = bloomed;
+    let strikes = 0;
+    let quality = 0;
 
     let worldPerPixel = 0.0023;
 
@@ -251,7 +270,9 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const resize = () => {
       const rect = host.getBoundingClientRect();
       if (!rect.width || !rect.height || !renderer) return;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      const cap = coarse ? FIELD.maxPixelRatioCoarse : FIELD.maxPixelRatio;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality >= 1 ? 1 : cap));
       renderer.setSize(rect.width, rect.height, false);
       camera.aspect = rect.width / rect.height;
       camera.updateProjectionMatrix();
@@ -338,8 +359,17 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
             centre.x + centreVelocity.x * step,
             centre.y + centreVelocity.y * step
           );
+          if (step > FIELD.slowFrameMs / 1000) strikes++;
+          if (strikes > FIELD.slowFrameStrikes && quality < 3) {
+            strikes = 0;
+            quality++;
+            if (quality === 1) resize();
+            if (quality === 2) output = plain;
+            if (quality === 3) sprites.count = Math.floor(count / 2);
+          }
+
           renderer.compute(update);
-          renderer.render(scene, camera);
+          output.renderAsync();
         });
       })
       .catch(() => {

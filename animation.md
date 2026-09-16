@@ -482,7 +482,43 @@ horizontal ellipse as a horizontal one — the width/height ratio holds at ~2.1 
 and at every speed. The squash along travel and perpendicular bulge are subtle (about 6% and 8%),
 not the dramatic reshaping they first appear to be.
 
-### 6.6 Renderer
+### 6.6 Bloom — the glow is a post-processing pass
+
+The blob's halo is not something the sprites can produce. The reference runs a **BloomNode**
+(three's UnrealBloom for WebGPU) over the scene pass:
+
+```js
+const scenePass = pass(scene, camera);
+const post = new PostProcessing(renderer);
+post.outputNode = scenePass.add(
+  bloom(scenePass.getTextureNode(), 0.35, 0.3, 0.75)   // strength, radius, threshold
+);
+```
+
+Internals from the bundle: 5 mips, half resolution (`_resolutionScale 0.5`), separable blur kernels
+`[6, 10, 14, 18, 22]`, mip weights `[1, 0.8, 0.6, 0.4, 0.2]`.
+
+The **threshold of 0.75 is the whole trick**. Only pixels above that luminance bloom, so the dim
+ambient band and the resting blob stay flat and text over them stays readable — and the glow
+appears only when the blob brightens under fast movement. A field without bloom cannot look right
+no matter how the sprites are tuned, and a field with bloom but no threshold washes the page out.
+
+Renderer pixel ratio is capped at `min(devicePixelRatio, coarse ? 2 : 1.5)` — 1.5 on desktop, not 2.
+
+### 6.7 Adaptive quality ladder
+
+The reference watches frame time and degrades in three stages rather than dropping frames:
+
+```
+strike 1   pixelRatio -> 1, resize
+strike 2   swap to a second PostProcessing instance with no bloom
+strike 3   halve the sprite count
+```
+
+Both post-processing chains are built up front and swapped by reference, so degrading costs
+nothing at the moment it happens.
+
+### 6.8 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.
