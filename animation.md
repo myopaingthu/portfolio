@@ -647,7 +647,47 @@ A caution on measuring this: density binned against the distance to the *centroi
 for a C-shape, whose centroid sits in the dense limb rather than the hollow, and `max` radius is
 badly skewed by outliers. Use percentile radii and equal-area annuli.
 
-### 6.11 Renderer
+### 6.11 A measurement bug that inflated every shape reading this session
+
+Every elongation/shape metric computed with a luminance threshold of ~50 in this session was
+contaminated by bloom's own diffuse spread: the post-process blur leaves a wide, very dim halo
+across a large area around the bright core, well below anything visible to the eye but bright
+enough to clear a threshold of 50. A visually perfect circle measured elongation 2.29 at threshold
+50 and 1.01 at threshold 90+. Any shape metric on a bloomed scene needs a threshold comfortably
+above the ambient/halo floor (90+ here) — a threshold picked before bloom existed will silently
+stop being valid once bloom is added.
+
+### 6.12 Centre-follow speed vs. shape-deformation speed are independent knobs
+
+These are easy to conflate and only one of them should move when a request is about "the blob
+feels too fast":
+
+- **Centre-follow speed** (`centreStiffness`, `centreDamping`) — how quickly the swarm's overall
+  position chases the pointer. This is what reads as "the blob particle's speed/acceleration."
+- **Shape-deformation response** (`blobElongate`, `blobNarrow`, `blobTail`, `speedRamp`) — how much
+  the swarm stretches for a given cursor velocity. This is a different axis entirely: it is driven
+  by raw pointer velocity, independent of how fast the centre spring itself is.
+
+Reducing `speedRamp` to slow the perceived acceleration was the wrong lever: it compressed the
+slow/fast elongation *distinction* (measured elong 1.24 vs 1.29 — barely different, where the
+verified-good range was 1.4 vs ~2.1) without doing much to the sensation of speed, because the
+sensation people call "speed" is centre-tracking lag, not deformation amount. The right lever was
+`centreStiffness`/`centreDamping`, scaled together to hold the damping ratio constant.
+
+Measured on a 300px jump-and-hold, at the corrected threshold:
+
+```
+                t+200ms   t+500ms   t+900ms   settled
+original (om~3.6)   +6%      +74%     +115%      ~102%
+slowed (om~3.0)      -1%      +56%     +108%      ~100%
+reference            ~19%     ~49%      ~82%      (n/a - own offset)
+```
+
+Still faster than the reference's own multi-second settle, but meaningfully gentler at the onset
+that actually reads as "acceleration," while shape ratios stayed correct (rest 1.01, slow 1.40,
+fast 2.09, regrouped 1.07).
+
+### 6.13 Renderer
 
 - `three` r186 as `three/webgpu` + `three/tsl`, automatic WebGL2 fallback.
 - Scene bg `0x0b0c0e`. `PerspectiveCamera(34, 1, 0.1, 20)` at `z = 3.4`.

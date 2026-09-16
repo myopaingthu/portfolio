@@ -13,8 +13,8 @@ export const FIELD = {
   blobNoiseAmp: 0.013,
   blobNoiseFreq: 1.6,
 
-  centreStiffness: 13,
-  centreDamping: 4,
+  centreStiffness: 9,
+  centreDamping: 3.3,
   speedRamp: 0.13,
   speedDecay: 0.965,
   speedRise: 0.14,
