@@ -384,6 +384,79 @@ group-hover:translate-x-1
 
 Translate, colour, border, scale-x. No shadows, no filters, no 3D.
 
+### 5.5 The hero instrument — the one place 3D is allowed
+
+The single exception to the rule above, and the reference's own: a stack of three sheets in a real
+perspective context, sitting in the hero's right column (measured `548 x 540` in a `740px + 548px`
+grid, vertically centred). The reference calls it `ReaderPrism`; ours is `LayerPrism`. The rule is
+not "no 3D" but "3D exactly once, in a component built for it."
+
+```
+.prism                     max-width 490px
+  .topline                 12px paper-1, space-between, 21px layers glyph in chrome-mid
+  .stage                   perspective: 1200px; --tilt-x; --tilt-y; touch-action: pan-y
+    .orbit                 ellipse, w85% h72% at top18% left7%, rotate(-28deg)
+                           ::after inset -15%, a second, fainter ring
+    .stack                 w76% h234px, transform-style: preserve-3d, top 35px left 9%
+      .sheet x3            absolute inset 0, 1px border, radius 3px, backface-visibility hidden
+                           ::after linear-gradient(125deg, white 20%, transparent 36%, ...)
+  .controls                grid of 3 buttons, 48px, 2px bottom border on the pressed one
+  .description             min-height 163px, swapped per active layer
+```
+
+**The stack re-orients per tab** — this is what makes it feel like an instrument rather than a
+carousel. Three fixed attitudes, each a plain CSS transform on `[data-layer]`:
+
+```
+layer 0    rotateX(12deg)   rotateY(-19deg)  rotateZ(-7deg)
+layer 1    rotateX(3deg)    rotateY(-9deg)   rotateZ(-3deg)
+layer 2    rotateX(-4deg)   rotateY(10deg)   rotateZ(4deg)
+```
+
+**The sheets rotate through three fixed slots**, not three fixed sheets. Give each sheet a
+`data-position` of `front | mid | back` computed as `(index - active + n) % n` and the CSS never
+needs to know which sheet is which:
+
+```
+front   opacity 1     border-color chrome-hi   translate3d(-2%,   1%,  65px)
+mid     opacity .75                            translate3d( 9%,  -7%,  -5px)
+back    opacity .46                            translate3d(20%, -15%, -75px)
+```
+
+**Pointer tilt** is the `MagneticCard` idiom in degrees rather than pixels — normalised delta from
+the stage centre, written to two custom properties the stack transform adds in:
+
+```js
+const nx = (e.clientX - r.left) / r.width  - 0.5;   // [-0.5, 0.5]
+const ny = (e.clientY - r.top)  / r.height - 0.5;
+stage.style.setProperty("--tilt-y", `${ 12 * nx}deg`);   // max +/- 6deg
+stage.style.setProperty("--tilt-x", `${ -9 * ny}deg`);   // max +/- 4.5deg
+```
+
+Confirmed against the reference at the corners: `(0.95, 0.05)` gives exactly `4.05deg / 5.4deg`,
+and it resets to `0deg` on leave.
+
+**Timings.** The reference uses `.65s` for the stack and `.85s` for the sheets, both
+`cubic-bezier(.22,1,.36,1)` — our `--ease-instrument`. Neither is in this project's duration set, so
+ours are **500ms stack / 700ms sheets / 500ms opacity**. What matters is not the absolute numbers
+but that the sheets settle *after* the stack: the frame leads, the contents follow. Keep that
+ratio if you retune.
+
+**Three things it deliberately does not do:**
+
+- **No auto-advance.** Sampled for 16s with no interaction: `data-reader` never moves. The reader
+  chooses; nothing rotates at you.
+- **No count-up, no numeric animation** anywhere on the reference — see §3.1.
+- **No motion without JS.** A `<noscript>` block sets `.stage, .controls { display: none }` and
+  drops the description's min-height, so the instrument vanishes and its text stands alone.
+
+Reduced motion kills the transitions in CSS *and* the tilt in JS — the pointer handler returns
+early rather than writing custom properties that nothing will animate.
+
+**A11y.** The stage is `aria-hidden` (it is an illustration; the description carries the meaning),
+and the controls are three `aria-pressed` buttons, so keyboard users tab and Enter through the
+layers with the standard focus ring.
+
 ---
 
 ## 6. Particle field (WebGPU) — TWO systems, not one

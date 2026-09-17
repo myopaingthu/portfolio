@@ -16,6 +16,94 @@ export const nav = [
   { label: "contact", href: "/contact" },
 ];
 
+type PrismSheet =
+  | {
+      kind: "screen";
+      source: string;
+      headline: [string, string];
+      foot: string;
+      mark: string;
+    }
+  | {
+      kind: "code";
+      source: string;
+      badge: string;
+      code: string;
+      foot: string;
+    };
+
+export const prism: {
+  topline: string;
+  layers: {
+    id: string;
+    label: string;
+    sheet: PrismSheet;
+    surface: string;
+    title: string;
+    body: string;
+    link: { label: string; href: string };
+  }[];
+} = {
+  topline: "One request. Every layer.",
+  layers: [
+    {
+      id: "interface",
+      label: "Interface",
+      sheet: {
+        kind: "screen",
+        source: "billing / run 2481",
+        headline: ["1,284 invoices", "issued."],
+        foot: "Recurring billing — automated run",
+        mark: "MPT",
+      },
+      surface: "Rendered screen",
+      title: "A surface that explains itself.",
+      body: "React, Vue and TypeScript. The part people touch has to look obvious, whatever it costs behind the glass.",
+      link: { label: "See the work", href: "/projects" },
+    },
+    {
+      id: "service",
+      label: "Service",
+      sheet: {
+        kind: "code",
+        source: "POST /api/billing/runs",
+        badge: "{ }",
+        code: `{
+  "cycle": "2026-09",
+  "tenant": "acme-isp",
+  "idempotency_key": "run_2481",
+  "dispatch": "queue:billing"
+}`,
+        foot: "Accepted once. Safe to retry.",
+      },
+      surface: "Request handler — excerpt",
+      title: "A contract that holds under retry.",
+      body: "Laravel and NestJS. Validation, idempotency keys and queues, so the same call twice still bills once.",
+      link: { label: "Read the record", href: "/experience" },
+    },
+    {
+      id: "data",
+      label: "Data",
+      sheet: {
+        kind: "code",
+        source: "ledger.invoice_lines",
+        badge: "SQL",
+        code: `BEGIN;
+  INSERT INTO invoices      (...);
+  INSERT INTO ledger_lines  (...);
+  UPDATE subscriptions
+     SET billed_through = '2026-09-30';
+COMMIT;`,
+        foot: "All three land, or none do.",
+      },
+      surface: "Transaction — excerpt",
+      title: "A write that balances or fails.",
+      body: "MySQL, PostgreSQL and Redis. Money moves inside one transaction — all of it, or none of it, never half.",
+      link: { label: "How I work", href: "/about" },
+    },
+  ],
+};
+
 export const thesis = {
   eyebrow: "the thesis",
   lead: "Most systems fail at the seams —",

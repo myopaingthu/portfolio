@@ -1,62 +1,78 @@
 import Link from "next/link";
+import { LayerPrism } from "@/components/interactions/LayerPrism";
 import { MagneticCard } from "@/components/interactions/MagneticCard";
 import { IndexRow } from "@/components/editorial/IndexRow";
 import { Eyebrow } from "@/components/editorial/Eyebrow";
 import { capabilities, doors, site, thesis } from "@/content/site";
 import { projects } from "@/content/portfolio";
 
-const featured = projects.filter((p) => p.category === "Professional Work").slice(0, 4);
+const featured = projects
+  .filter((p) => p.category === "Professional Work")
+  .slice(0, 4);
 
 export default function Home() {
   return (
     <>
-      <section className="relative border-b border-hairline">
-        <div className="relative mx-auto flex min-h-[calc(100svh-64px)] max-w-[1440px] flex-col justify-center px-6 py-20 md:px-10">
-          <p className="mb-8 text-[13px] tracking-[0.015em] text-paper-1" data-hero-reveal>
-            {site.name} / {site.role}
-          </p>
-
-          <h1
-            className="max-w-[16ch] text-[clamp(52px,7.25vw,108px)] font-semibold leading-[0.98] tracking-[-0.058em] text-paper-0"
-            data-field-mask
-            data-hero-reveal
-          >
-            Systems that
-            <br />
-            hold under{" "}
-            <span className="bg-gradient-to-r from-paper-0 via-chrome-mid to-chrome-lo bg-clip-text text-transparent">
-              load
-            </span>
-            .
-          </h1>
-
-          <p
-            className="mt-8 max-w-[43ch] text-[clamp(16px,1.4vw,18px)] leading-[1.65] text-paper-1"
-            data-field-mask
-            data-hero-reveal
-          >
-            {site.description}
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3" data-field-mask data-hero-reveal>
-            <Link
-              href="/projects"
-              className="inline-flex min-h-12 items-center justify-center border border-paper-0 bg-paper-0 px-6 text-[13px] font-medium text-ink-0 no-underline transition-[background-color,border-color] duration-[180ms] hover:border-[#dfe3e9] hover:bg-[#dfe3e9]"
+      <section className="relative overflow-hidden border-b border-hairline">
+        <div className="relative mx-auto grid min-h-[calc(100svh-64px)] max-w-[1440px] items-center gap-x-14 gap-y-20 px-6 pt-20 pb-[20vh] md:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)]">
+          <div>
+            <p
+              className="mb-8 text-[13px] tracking-[0.015em] text-paper-1"
+              data-hero-reveal
             >
-              See the work
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex min-h-12 items-center justify-center border border-chrome-lo px-6 text-[13px] font-medium text-paper-0 no-underline transition-[background-color,border-color] duration-[180ms] hover:border-paper-0 hover:bg-paper-0/5"
+              {site.name} / {site.role}
+            </p>
+
+            <h1
+              className="max-w-[16ch] text-[clamp(52px,7.25vw,108px)] font-semibold leading-[0.98] tracking-[-0.058em] text-paper-0"
+              data-field-mask
+              data-hero-reveal
             >
-              Start a conversation
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex min-h-12 items-center px-2.5 text-[13px] font-medium text-paper-1 underline decoration-chrome-lo underline-offset-[5px] transition-colors duration-200 hover:text-paper-0"
+              Systems that
+              <br />
+              hold under{" "}
+              <span className="bg-gradient-to-r from-paper-0 via-chrome-mid to-chrome-lo bg-clip-text text-transparent">
+                load
+              </span>
+              .
+            </h1>
+
+            <p
+              className="mt-8 max-w-[43ch] text-[clamp(16px,1.4vw,18px)] leading-[1.65] text-paper-1"
+              data-field-mask
+              data-hero-reveal
             >
-              Read the notes
-            </Link>
+              {site.description}
+            </p>
+
+            <div
+              className="mt-8 flex flex-wrap items-center gap-3"
+              data-field-mask
+              data-hero-reveal
+            >
+              <Link
+                href="/projects"
+                className="inline-flex min-h-12 items-center justify-center border border-paper-0 bg-paper-0 px-6 text-[13px] font-medium text-ink-0 no-underline transition-[background-color,border-color] duration-[180ms] hover:border-[#dfe3e9] hover:bg-[#dfe3e9]"
+              >
+                See the work
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex min-h-12 items-center justify-center border border-chrome-lo px-6 text-[13px] font-medium text-paper-0 no-underline transition-[background-color,border-color] duration-[180ms] hover:border-paper-0 hover:bg-paper-0/5"
+              >
+                Start a conversation
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex min-h-12 items-center px-2.5 text-[13px] font-medium text-paper-1 underline decoration-chrome-lo underline-offset-[5px] transition-colors duration-200 hover:text-paper-0"
+              >
+                Read the notes
+              </Link>
+            </div>
+          </div>
+
+          <div data-hero-reveal>
+            <LayerPrism />
           </div>
         </div>
       </section>
@@ -196,8 +212,8 @@ export default function Home() {
                 One address, read by the person who does the work.
               </h2>
               <p className="mt-4 max-w-[46ch] text-[14.5px] leading-[1.7] text-paper-1">
-                Two plain sentences beat a brief. Tell me what is broken or what you
-                are building.
+                Two plain sentences beat a brief. Tell me what is broken or what
+                you are building.
               </p>
             </div>
 

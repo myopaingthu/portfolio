@@ -20,6 +20,9 @@ trust its specifics.
 - Reveals are declarative: add `data-reveal` to an element or `data-reveal-group` to a container.
   Never hand-roll a ScrollTrigger in a component.
 - No decorative motion. No tilt, glow, spotlight, aurora, parallax, blobs, or 3D card effects.
+  Two components are the deliberate exceptions and the only ones: `graphics/ParticleField` and
+  `interactions/LayerPrism` (perspective, 3D transforms, pointer tilt — see `animation.md` §5.5).
+  Do not spread their vocabulary to anything else.
 - Hover vocabulary is translate / colour / border / scale-x only. No shadows, no filters.
 - Content lives in `src/content/`. Never hardcode copy in components.
 - The particle field is hard-gated behind WebGPU + reduced-motion + saveData checks. The site must
