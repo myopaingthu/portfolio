@@ -198,6 +198,37 @@ translate: none; rotate: none; scale: none; transform: translate(0px, 14px); opa
 Setting `translate`/`rotate`/`scale` to `none` while writing `transform` is GSAP's signature for
 taking ownership of an element's transform.
 
+### 3.1 Counting readouts — ours, not the reference's
+
+The reference has **no** count-up animation. Its numerals (`05`, `222→31`, `187ms`, `rec 11`) are
+either static or live telemetry; sampling every numeric leaf node across a scroll shows zero
+transitional values. What it does have is a numeric *register*: zero-padded, monospace, uniform
+width. So the counter here is an addition, built to sit inside that register rather than to copy
+something that is not there.
+
+It rides the same declarative system as the reveals — `data-count="05"` on the element, registered
+inside the pathname-scoped `gsap.context()`, never hand-rolled in a component:
+
+```js
+const parts = /^(\D*?)(\d+)(\D*)$/.exec(el.dataset.count);   // "30%" -> ["", "30", "%"]
+gsap.to({ value: 0 }, {
+  value: Number(digits), duration: 0.7, ease: "power3.out",
+  onUpdate: () => { el.textContent = prefix + padded + suffix },
+  scrollTrigger: { trigger: el, start: "top 88%", once: true },
+});
+```
+
+Three details that matter:
+
+- **The digit width is taken from the markup**, so `05` counts `00 → 05` and never flashes a
+  narrower `5`. The suffix rides along, so `30%` counts `00% → 30%`.
+- **The final value is what the server renders.** JS zeroes it at registration, which is safe
+  because `[data-reveal]` holds the element at `opacity: 0` until its own trigger fires — there is
+  no flash of the real number, and with JS off or motion reduced the true value is simply there.
+- `tabular-nums` on the element, or the readout jitters as digits change.
+
+Duration is 700ms — the reveal duration, so number and panel land together.
+
 ---
 
 ## 4. Smooth scroll (Lenis)
@@ -223,6 +254,36 @@ Two things worth copying:
    GSAP compensating for frame drops. Scroll position and tweens can never desync.
 
 Teardown removes the ticker callback and calls `lenis.destroy()`.
+
+### 4.1 The default `content` option silently breaks every route but the first
+
+Lenis clamps scrolling to a cached `limit = content.scrollHeight - wrapper.height`, refreshed by a
+`ResizeObserver` on `content`. `content` defaults to `document.documentElement` — and in a normal
+document `<html>` **is** the scroll container, so its border box is always exactly the viewport
+height no matter how tall the page gets:
+
+```
+document.documentElement.getBoundingClientRect().height  ->  863   (viewport)
+document.documentElement.scrollHeight                    ->  10353 (document)
+```
+
+The observed box never changes, so the observer never fires and the limit is whatever it was when
+Lenis was constructed. In an SPA that instance outlives the route: land on a 5,415px home page,
+client-navigate to a 10,353px projects page, and scrolling dies **4,938px short of the bottom** —
+the native scrollbar shows content the wheel cannot reach. Measured, not theorised.
+
+Two fixes, both needed:
+
+```js
+new Lenis({ lerp: 0.12, wheelMultiplier: 1, content: document.body });
+```
+
+`<body>` is the element whose box actually tracks content height, so lazy-loaded images and late
+layout now fire the observer. Its 250ms debounce is still too slow for a route change, so the
+pathname-scoped effect also calls `lenis.resize()` before `ScrollTrigger.refresh()`, and a
+`ResizeObserver` on `document.body` re-runs both (debounced 120ms) whenever the page grows.
+
+Verified after the fix: 0px unreachable on all five routes after client-side navigation.
 
 ---
 

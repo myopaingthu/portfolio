@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { Eyebrow } from "@/components/editorial/Eyebrow";
+import { ProjectGallery } from "@/components/editorial/ProjectGallery";
 import { projects, galleries } from "@/content/portfolio";
 
 export const metadata: Metadata = {
@@ -70,19 +70,11 @@ function ProjectRow({
           ) : null}
 
           {gallery ? (
-            <div className="mt-8 flex flex-wrap gap-4">
-              {gallery.images.map((image) => (
-                <Image
-                  key={image.src}
-                  src={image.src}
-                  alt={image.label}
-                  width={image.orientation === "portrait" ? 220 : 480}
-                  height={image.orientation === "portrait" ? 476 : 300}
-                  className="border border-hairline object-cover opacity-70 transition-opacity duration-300 hover:opacity-100"
-                  sizes="(max-width: 768px) 45vw, 480px"
-                />
-              ))}
-            </div>
+            <ProjectGallery
+              title={gallery.title}
+              images={gallery.images}
+              project={project.title}
+            />
           ) : null}
         </div>
       </div>

@@ -293,41 +293,49 @@ export const projects = [
   },
 ];
 
-export const galleries: Record<string, { title: string; images: { src: string; label: string; orientation: string }[] }> = {
+export type Plate = {
+  src: string;
+  label: string;
+  orientation: "portrait" | "landscape";
+  width: number;
+  height: number;
+};
+
+export const galleries: Record<string, { title: string; images: Plate[] }> = {
   social: {
     title: "Social in uab pay",
     images: [
-      { src: "/images/social_home.jpg", label: "Social Project Screenshot 1", orientation: "portrait" },
-      { src: "/images/social_landing.jpg", label: "Social Project Screenshot 2", orientation: "portrait" },
-      { src: "/images/social_profile.jpg", label: "Social Project Screenshot 3", orientation: "portrait" },
+      { src: "/images/social_home.jpg", label: "home feed", orientation: "portrait", width: 811, height: 1800 },
+      { src: "/images/social_landing.jpg", label: "landing", orientation: "portrait", width: 811, height: 1800 },
+      { src: "/images/social_profile.jpg", label: "profile", orientation: "portrait", width: 811, height: 1800 },
     ],
   },
   sermal: {
     title: "Sermal Admin Portals",
     images: [
-      { src: "/images/sm_home.jpg", label: "Sermal Portal Screenshot 1", orientation: "portrait" },
-      { src: "/images/sm_info.jpg", label: "Sermal Portal Screenshot 2", orientation: "portrait" },
+      { src: "/images/sm_home.jpg", label: "portal home", orientation: "portrait", width: 811, height: 1800 },
+      { src: "/images/sm_info.jpg", label: "record detail", orientation: "portrait", width: 811, height: 1800 },
     ],
   },
   grocery: {
     title: "On-Demand Grocery & Food Service",
     images: [
-      { src: "/images/nm_dh.png", label: "Dashboard Desktop Layout", orientation: "landscape" },
-      { src: "/images/nm_hm.png", label: "Mobile View Layout", orientation: "portrait" },
+      { src: "/images/nm_dh.png", label: "admin dashboard", orientation: "landscape", width: 2880, height: 1556 },
+      { src: "/images/nm_hm.png", label: "storefront", orientation: "portrait", width: 842, height: 1892 },
     ],
   },
   car: {
     title: "Classified Car Marketplace Platform",
     images: [
-      { src: "/images/na_dh.png", label: "Dashboard Desktop Layout", orientation: "landscape" },
-      { src: "/images/na_view.png", label: "Mobile View Layout", orientation: "portrait" },
+      { src: "/images/na_dh.png", label: "admin dashboard", orientation: "landscape", width: 2880, height: 1556 },
+      { src: "/images/na_view.png", label: "listing view", orientation: "portrait", width: 772, height: 1816 },
     ],
   },
   isp: {
     title: "Multi-tenant ISP billing and subscription platform",
     images: [
-      { src: "/images/isp_1.png", label: "Dashboard Desktop Layout", orientation: "landscape" },
-      { src: "/images/isp_2.png", label: "Dashboard Desktop Layout", orientation: "landscape" },
+      { src: "/images/isp_1.png", label: "billing dashboard", orientation: "landscape", width: 1919, height: 960 },
+      { src: "/images/isp_2.png", label: "subscription detail", orientation: "landscape", width: 1919, height: 960 },
     ],
   },
 };

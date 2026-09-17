@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,6 +16,13 @@ import Lenis from "lenis";
 const REVEAL = "[data-reveal]:not([data-reveal-group] [data-reveal])";
 const GROUP = "[data-reveal-group]";
 const HERO = "[data-hero-reveal]";
+const COUNT = "[data-count]";
+
+const ScrollEngine = createContext<RefObject<Lenis | null> | null>(null);
+
+export function useScrollEngine() {
+  return useContext(ScrollEngine);
+}
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -23,6 +37,30 @@ function showEverything() {
     });
 }
 
+function registerCounters() {
+  for (const el of gsap.utils.toArray<HTMLElement>(COUNT)) {
+    const parts = /^(\D*?)(\d+)(\D*)$/.exec(el.dataset.count ?? "");
+    if (!parts) continue;
+
+    const [, prefix, digits, suffix] = parts;
+    const width = digits.length;
+    const counter = { value: 0 };
+    const render = () => {
+      el.textContent = `${prefix}${String(Math.round(counter.value)).padStart(width, "0")}${suffix}`;
+    };
+
+    render();
+
+    gsap.to(counter, {
+      value: Number(digits),
+      duration: 0.7,
+      ease: "power3.out",
+      onUpdate: render,
+      scrollTrigger: { trigger: el, start: "top 88%", once: true },
+    });
+  }
+}
+
 export function MotionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const lenisRef = useRef<Lenis | null>(null);
@@ -34,7 +72,11 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
     const lenis = window.matchMedia("(pointer: coarse)").matches
       ? null
-      : new Lenis({ lerp: 0.12, wheelMultiplier: 1 });
+      : new Lenis({
+          lerp: 0.12,
+          wheelMultiplier: 1,
+          content: document.body,
+        });
 
     lenisRef.current = lenis;
 
@@ -100,17 +142,34 @@ export function MotionProvider({ children }: { children: ReactNode }) {
           scrollTrigger: { trigger: group, start: "top 88%", once: true },
         });
       }
+
+      registerCounters();
     });
 
-    const refresh = () => ScrollTrigger.refresh();
-    document.fonts.ready.then(refresh);
-    const settle = window.setTimeout(refresh, 120);
+    let pending = 0;
+
+    const refresh = () => {
+      lenisRef.current?.resize();
+      ScrollTrigger.refresh();
+    };
+
+    const scheduleRefresh = () => {
+      window.clearTimeout(pending);
+      pending = window.setTimeout(refresh, 120);
+    };
+
+    refresh();
+    document.fonts.ready.then(scheduleRefresh);
+
+    const observer = new ResizeObserver(scheduleRefresh);
+    observer.observe(document.body);
 
     return () => {
-      window.clearTimeout(settle);
+      window.clearTimeout(pending);
+      observer.disconnect();
       context.revert();
     };
   }, [pathname]);
 
-  return children;
+  return <ScrollEngine value={lenisRef}>{children}</ScrollEngine>;
 }

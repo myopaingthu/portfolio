@@ -141,6 +141,14 @@
     pointer-events: none;
     transform: translateY(14px);
   }
+
+  dialog {
+    overscroll-behavior: contain;
+  }
+
+  dialog::backdrop {
+    background: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,6 +161,15 @@
 
   main {
     transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
