@@ -1,12 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 const ParticleField = dynamic(
   () => import("./ParticleField").then((m) => m.ParticleField),
   { ssr: false }
 );
 
+const NO_AMBIENT = /^\/projects\/[^/]+\/?$/;
+
 export function HeroField() {
-  return <ParticleField maskSelector="[data-field-mask]" />;
+  const pathname = usePathname();
+  const ambient = !NO_AMBIENT.test(pathname);
+
+  return <ParticleField maskSelector="[data-field-mask]" ambient={ambient} />;
 }

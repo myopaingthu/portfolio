@@ -337,6 +337,27 @@ pathname-scoped effect also calls `lenis.resize()` before `ScrollTrigger.refresh
 
 Verified after the fix: 0px unreachable on all five routes after client-side navigation.
 
+### 4.2 `resize()` has to run before `scrollTo()`, not just before `refresh()`
+
+A second instance of the same class of bug, found while adding scroll-position memory (§7.1):
+restoring a remembered scroll value on return to a route landed short, the same "clamped to a
+stale limit" shape as 4.1, just triggered a different way. The pathname-scoped effect already
+called `lenis.resize()` — but inside `refresh()`, which ran *after* `lenis.scrollTo(target, ...)`
+in source order. `scrollTo` clamps to whatever `limit` Lenis is currently holding, and at that
+point it was still the outgoing route's height, not the one just rendered.
+
+```js
+const lenis = lenisRef.current;
+lenis?.resize();                                    // must come first
+if (lenis) lenis.scrollTo(target, { immediate: true });
+else window.scrollTo({ top: target, behavior: "instant" });
+```
+
+`resize()` is a synchronous DOM read (`content.scrollHeight`, `wrapper.clientHeight`), so calling
+it immediately before `scrollTo` costs nothing and makes the limit correct for the page that is
+actually on screen. Measured: restoring to a 5,202px scroll position on the projects registry
+landed at 1,190px before this fix, exact 5,202px after.
+
 ---
 
 ## 5. Hover micro-interactions
@@ -603,6 +624,8 @@ The band drifts slowly and is displaced locally when the pointer comes near, spr
 its home position afterwards.
 
 ### 6.2 Cursor blob
+
+
 
 A cluster that tracks the pointer anywhere on the page, at any scroll position. Its shape is
 **driven by pointer speed**, and the direction is the opposite of what you would guess:
@@ -939,6 +962,42 @@ fast 2.09, regrouped 1.07).
   `worldPerPixel = 2 * halfH / rectHeight`.
 - Up to 6 tracked elements become repulsion masks so particles stay off live text.
 
+### 6.14 Ambient band is per-route, not global
+
+The band (6.1) is a good fit for a hero-scale viewport; it is wrong on a page whose content is a
+long, dense list of readouts and plates, where a full-width band re-forms at the bottom of every
+section as you scroll past it. The project case files (`/projects/[slug]`) turn it off and keep
+the cursor blob — the two systems are independent, and only one of them was the problem.
+
+The switch is a uniform, not an unmount. `ParticleField` takes an `ambient` prop; `HeroField`
+computes it from `usePathname()` against `/^\/projects\/[^/]+\/?$/` and passes it down. Ambient
+particles carry `role = 0`, blob particles `role = 1`
+(`material.colorNode = vec4(..., mix(ambientAlpha, blobAlpha, role))`), so multiplying the ambient
+branch's alpha and scale by an `ambientVisible` uniform hides only the `role = 0` particles — the
+blob term is `mix(x, blobAlpha, 1) = blobAlpha`, untouched regardless of that uniform.
+
+Two effects, not one, keep this cheap. Setup reads the prop once through a ref, at build time:
+
+```js
+const ambientVisible = uniform(ambientRef.current ? 1 : 0);
+```
+
+A second, tiny effect keeps it live without touching the first:
+
+```js
+useEffect(() => {
+  ambientRef.current = ambient;
+  if (ambientVisibleRef.current) ambientVisibleRef.current.value = ambient ? 1 : 0;
+}, [ambient]);
+```
+
+The renderer, buffers and compute pipeline are built once, in an effect keyed on `[maskSelector]`
+only — `ambient` is deliberately absent from that dependency array. Navigating between `/projects`
+and a case file toggles a single float on the GPU; it does not tear down and rebuild 118,000
+particles' worth of state.
+
+---
+
 ## 7. Route transition
 
 Not a particle melt. A 300ms CSS fade, despite the class name:
@@ -952,6 +1011,42 @@ main                 { transition: opacity .3s, transform .3s }
 `.jm-melt` is toggled on the root element around navigation. `pointer-events: none` during the
 transition prevents double-clicks on outgoing content. The 14px offset is the same distance as the
 scroll reveal, so exits and entrances share one spatial language.
+
+### 7.1 Scroll position memory — list to detail and back
+
+Not in the reference; ours, added for the project registry. Every route change resets scroll to
+top by default (§4), which is correct for a fresh page but wrong for returning to a long list you
+were partway down. The fix is narrow on purpose: remember where you were, restore it only when the
+navigation is a return to a route's own parent, reset to top everywhere else.
+
+`src/lib/scroll-memory.ts` is a plain module-scope `Map<pathname, scrollY>` — no context, no
+storage, no persistence across a hard reload. Two call sites:
+
+```js
+// RouteTransition, at the moment a link is clicked — before the route changes
+rememberScroll(window.location.pathname, window.scrollY);
+```
+
+```js
+// MotionProvider, on every pathname change
+const isReturningToParent =
+  pathname !== "/" && previous !== null && previous !== pathname &&
+  previous.startsWith(`${pathname}/`);
+
+const remembered = isReturningToParent ? recallScroll(pathname) : undefined;
+const target = remembered ?? 0;
+```
+
+`isReturningToParent` is the whole rule: if the route being left is a child path of the route being
+entered — `/projects/on-demand-grocery` back to `/projects` — restore; otherwise, top. This covers
+the browser Back button and an in-page "← back" link identically, because both just change
+`pathname` and let the same effect run; neither is special-cased. It also stays correct for
+sideways navigation (`/projects` → `/about` → `/projects`), which resets to top rather than
+restoring, since `/about` is never a child path of `/projects`.
+
+Capturing scroll on click rather than in an effect cleanup matters: by the time a route's effect
+tears down, Next has already swapped the DOM, and `window.scrollY` no longer belongs to the page
+being left.
 
 ---
 

@@ -35,8 +35,25 @@ import {
   rectToWorld,
 } from "@/lib/particles/projection";
 
-export function ParticleField({ maskSelector }: { maskSelector?: string }) {
+type AmbientUniform = { value: number };
+
+export function ParticleField({
+  maskSelector,
+  ambient = true,
+}: {
+  maskSelector?: string;
+  ambient?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const ambientVisibleRef = useRef<AmbientUniform | null>(null);
+  const ambientRef = useRef(ambient);
+
+  useEffect(() => {
+    ambientRef.current = ambient;
+    if (ambientVisibleRef.current) {
+      ambientVisibleRef.current.value = ambient ? 1 : 0;
+    }
+  }, [ambient]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -61,6 +78,9 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const velocities = instancedArray(count, "vec3");
     const homeBuffer = instancedArray(homes, "vec3");
     const paramBuffer = instancedArray(params, "vec3");
+
+    const ambientVisible = uniform(ambientRef.current ? 1 : 0);
+    ambientVisibleRef.current = ambientVisible;
 
     const pointer = uniform(new THREE.Vector3(0, -0.6, 0));
     const pointerActive = uniform(0);
@@ -227,14 +247,18 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     const flare = pow(pointerSpeed, float(2));
     const blobLift = flare.mul(0.62).add(0.72);
 
-    const ambientAlpha = depth.mul(0.055).add(0.058).mul(max(param.y, float(0.45)));
+    const ambientAlpha = depth
+      .mul(0.055)
+      .add(0.058)
+      .mul(max(param.y, float(0.45)))
+      .mul(ambientVisible);
     const blobAlpha = depth
       .mul(0.05)
       .add(0.082)
       .mul(max(param.y, float(0.55)))
       .mul(blobLift);
 
-    const ambientSize = mix(float(1.25), float(3.4), param.x);
+    const ambientSize = mix(float(1.25), float(3.4), param.x).mul(ambientVisible);
     const blobSize = mix(float(1.6), float(4.4), param.x).mul(
       mix(float(1), float(0.94), pointerSpeed)
     );
@@ -448,6 +472,7 @@ export function ParticleField({ maskSelector }: { maskSelector?: string }) {
     return () => {
       disposed = true;
       resizeObserver?.disconnect();
+      ambientVisibleRef.current = null;
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerleave", onPointerLeave);
       window.removeEventListener("scroll", onScroll);

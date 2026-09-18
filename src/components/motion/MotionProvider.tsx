@@ -10,6 +10,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
+import { recallScroll } from "@/lib/scroll-memory";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 
@@ -76,6 +77,7 @@ function registerTraceNodes() {
 export function MotionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const lenisRef = useRef<Lenis | null>(null);
+  const previousPathnameRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -108,6 +110,9 @@ export function MotionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const previous = previousPathnameRef.current;
+    previousPathnameRef.current = pathname;
+
     if (prefersReducedMotion()) {
       showEverything();
       return;
@@ -115,9 +120,19 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
     gsap.registerPlugin(ScrollTrigger);
 
+    const isReturningToParent =
+      pathname !== "/" &&
+      previous !== null &&
+      previous !== pathname &&
+      previous.startsWith(`${pathname}/`);
+
+    const remembered = isReturningToParent ? recallScroll(pathname) : undefined;
+    const target = remembered ?? 0;
+
     const lenis = lenisRef.current;
-    if (lenis) lenis.scrollTo(0, { immediate: true });
-    else window.scrollTo({ top: 0, behavior: "instant" });
+    lenis?.resize();
+    if (lenis) lenis.scrollTo(target, { immediate: true });
+    else window.scrollTo({ top: target, behavior: "instant" });
 
     const context = gsap.context(() => {
       const hero = gsap.utils.toArray<HTMLElement>(HERO);

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { rememberScroll } from "@/lib/scroll-memory";
 
 const MELT_MS = 300;
 
@@ -26,6 +27,8 @@ export function RouteTransition() {
 
       const destination = new URL(href, window.location.origin);
       if (destination.pathname === window.location.pathname) return;
+
+      rememberScroll(window.location.pathname, window.scrollY);
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
