@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Eyebrow } from "@/components/editorial/Eyebrow";
-import { ProjectGallery } from "@/components/editorial/ProjectGallery";
-import { projects, galleries } from "@/content/portfolio";
+import { ProjectCard } from "@/components/editorial/ProjectCard";
+import { projects } from "@/content/portfolio";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -13,72 +12,40 @@ export const metadata: Metadata = {
 const professional = projects.filter((p) => p.category === "Professional Work");
 const personal = projects.filter((p) => p.category === "Personal Project");
 
-function ProjectRow({
-  project,
-  id,
+const pad = (n: number) => String(n).padStart(2, "0");
+
+const CHIP = "label-mono border border-hairline bg-ink-0 px-3 py-1.5 text-[11px] text-paper-1";
+
+function Registry({
+  left,
+  right,
+  prefix,
+  entries,
+  last,
 }: {
-  project: (typeof projects)[number];
-  id: string;
+  left: string;
+  right: string;
+  prefix: string;
+  entries: typeof projects;
+  last?: boolean;
 }) {
-  const gallery = project.gallery ? galleries[project.gallery] : null;
-
   return (
-    <article className="border-b border-hairline py-12" data-reveal>
-      <div className="flex flex-col gap-6 md:flex-row md:gap-12">
-        <div className="shrink-0 md:w-32">
-          <p className="label-mono text-[11px]">{id}</p>
-        </div>
-
-        <div className="flex-1">
-          <h2 className="text-editorial font-semibold tracking-[-0.015em] text-paper-0">
-            {project.title}
-          </h2>
-
-          <p className="mt-4 max-w-[68ch] text-[15px] leading-[1.7] text-paper-1">
-            {project.description}
-          </p>
-
-          <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2">
-            {project.tags.map((tag) => (
-              <li
-                key={tag}
-                className="label-mono border border-hairline px-2.5 py-1 text-[10.5px]"
-              >
-                {tag}
-              </li>
-            ))}
-          </ul>
-
-          {project.links.length > 0 ? (
-            <ul className="mt-6 flex flex-wrap gap-x-7 gap-y-2">
-              {project.links.map((link, index) => (
-                <li key={`${link.href}-${index}`}>
-                  <Link
-                    href={link.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group label-mono transition-colors duration-200 hover:text-paper-0"
-                  >
-                    {link.label}{" "}
-                    <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                      ↗
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          {gallery ? (
-            <ProjectGallery
-              title={gallery.title}
-              images={gallery.images}
-              project={project.title}
-            />
-          ) : null}
-        </div>
+    <section className={`py-16 md:py-20 ${last ? "" : "border-b border-hairline"}`}>
+      <div className="mb-9 flex flex-wrap items-baseline justify-between gap-4">
+        <p className={CHIP}>{left}</p>
+        <p className={CHIP}>{right}</p>
       </div>
-    </article>
+
+      <div className="grid gap-px bg-hairline md:grid-cols-2" data-reveal-group>
+        {entries.map((project, index) => (
+          <ProjectCard
+            key={project.slug}
+            project={project}
+            id={`${prefix}-${pad(index + 1)}`}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -86,13 +53,23 @@ export default function ProjectsPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-10">
       <header className="flex min-h-[calc(100svh-64px)] flex-col justify-center border-b border-hairline pb-[30vh]">
-        <Eyebrow className="mb-8" data-hero-reveal>projects — the record</Eyebrow>
-        <h1 className="max-w-[14ch] text-display font-semibold text-paper-0" data-hero-reveal data-field-mask>
+        <Eyebrow className="mb-8" data-hero-reveal>
+          projects — the registry
+        </Eyebrow>
+        <h1
+          className="max-w-[14ch] text-display font-semibold text-paper-0"
+          data-hero-reveal
+          data-field-mask
+        >
           Shipped, not
           <br />
           shelved.
         </h1>
-        <p className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1" data-hero-reveal data-field-mask>
+        <p
+          className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1"
+          data-hero-reveal
+          data-field-mask
+        >
           Nineteen projects across SaaS, financial services, digital health,
           e-commerce and HR tech. Ten in production for employers and clients,
           nine built to learn something specific.
@@ -102,31 +79,20 @@ export default function ProjectsPage() {
         </p>
       </header>
 
-      <section className="pt-16">
-        <Eyebrow className="mb-4">professional work — {professional.length}</Eyebrow>
-        <div data-reveal-group>
-          {professional.map((project, index) => (
-            <ProjectRow
-              key={project.title}
-              project={project}
-              id={`PRO-${String(index + 1).padStart(2, "0")}`}
-            />
-          ))}
-        </div>
-      </section>
+      <Registry
+        left="pro — built & shipped"
+        right={`${pad(professional.length)} entries · engineered to production`}
+        prefix="PRO"
+        entries={professional}
+      />
 
-      <section className="pt-16">
-        <Eyebrow className="mb-4">personal projects — {personal.length}</Eyebrow>
-        <div data-reveal-group>
-          {personal.map((project, index) => (
-            <ProjectRow
-              key={project.title}
-              project={project}
-              id={`LAB-${String(index + 1).padStart(2, "0")}`}
-            />
-          ))}
-        </div>
-      </section>
+      <Registry
+        left="lab — built to learn"
+        right={`${pad(personal.length)} entries · built outside the day job`}
+        prefix="LAB"
+        entries={personal}
+        last
+      />
     </div>
   );
 }

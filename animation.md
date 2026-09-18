@@ -511,6 +511,62 @@ layers with the standard focus ring.
 
 ---
 
+### 5.6 Registry cards — the exhibit panel
+
+The `blt — built & shipped` grid on `/work/`. Four separate treatments stack into one surface, and
+the order they are declared in matters:
+
+```css
+.panel {
+  background: linear-gradient(180deg, var(--color-ink-2), var(--color-ink-1) 60%);
+  border: 1px solid var(--color-hairline);
+  box-shadow: inset 0 1px #f4f5f70f, 0 1px #00000080;   /* 1px bevel, not a glow */
+}
+.ticks {                    /* 9px corner marks, 8 gradients, no pseudo-elements */
+  background-image: <8x linear-gradient(hairline-strong, hairline-strong)>;
+  background-position: 0 0, 0 0, 100% 0, 100% 0, 0 100%, 0 100%, 100% 100%, 100% 100%;
+  background-size: 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px;
+  background-repeat: no-repeat;
+}
+.chrome-rule {              /* the divider above the card footer */
+  height: 1px; border: 0;
+  background: linear-gradient(90deg, transparent, chrome-lo 18%, chrome-hi 50%, chrome-lo 82%, transparent);
+}
+```
+
+**`.ticks` silently kills `.panel`'s gradient.** Both write `background-image`, and the later rule
+wins, so a card carrying both renders with only the eight 9px corner marks and *no fill at all* —
+on this site that means the particle canvas shows straight through the card. The reference's own
+markup gives it away: every card is `panel ticks … bg-ink-1 p-8`. That `bg-ink-1` is not
+decoration, it is the fix — `background-color` is a different property, so it survives. Ours hit
+exactly this and reads the same way now.
+
+**The hover sweep** is a single pseudo-element sliding across, not an animation:
+
+```css
+.exhibit-sweep::after {
+  content: ""; position: absolute; inset-block: 0; left: -60%; width: 45%;
+  background: linear-gradient(90deg, transparent, #e9ebef0d, transparent);
+  transform: skew(-12deg);
+  transition: transform 700ms var(--ease-instrument);
+}
+.group:hover .exhibit-sweep::after { transform: skew(-12deg) translate(340%); }
+```
+
+At 5% chrome-hi it is almost subliminal — you read it as the card acknowledging the cursor rather
+than as a shine. The parent needs `overflow: hidden` or it sweeps across its neighbours.
+
+**The readouts warm on hover**, `paper-2 → paper-0` over 700ms on `--ease-instrument` — slow enough
+that the number seems to come up to temperature rather than switch.
+
+Card anatomy, top to bottom: index `BLT-01` (mono, warms to chrome-hi on hover) and period/status
+on one baseline; the title; a mono uppercase `kind` line at `tracking-[0.12em]`; one line of
+summary at `max-w-[48ch]`; a two-cell readout grid; `chrome-rule`; then `open case file →` against
+the bare domain. The grid is `gap-px bg-hairline md:grid-cols-2`, so the hairlines between cards
+are the grid gap showing through.
+
+---
+
 ## 6. Particle field (WebGPU) — TWO systems, not one
 
 ```js

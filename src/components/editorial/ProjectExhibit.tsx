@@ -7,25 +7,16 @@ import type { Plate } from "@/content/portfolio";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-const FRAME_SIZE: Record<Plate["orientation"], string> = {
-  portrait: "h-[248px] w-auto sm:h-[276px] lg:h-[332px]",
-  landscape: "h-auto w-full sm:h-[276px] sm:w-auto lg:h-[332px]",
-};
-
 const ARROW =
   "flex h-10 w-10 shrink-0 items-center justify-center border border-hairline font-mono text-[15px] text-chrome-mid transition-colors duration-200 hover:border-chrome-lo hover:text-paper-0 md:h-11 md:w-11";
 
-const SIZES: Record<Plate["orientation"], string> = {
-  portrait: "(max-width: 640px) 45vw, 200px",
-  landscape: "(max-width: 640px) 92vw, 640px",
-};
+const PLATE =
+  "block border border-hairline bg-ink-1 p-2 transition-colors duration-200 group-hover:border-hairline-strong group-hover:bg-ink-2";
 
-export function ProjectGallery({
-  title,
+export function ProjectExhibit({
   images,
   project,
 }: {
-  title: string;
   images: Plate[];
   project: string;
 }) {
@@ -70,44 +61,73 @@ export function ProjectGallery({
   const plate = active === null ? null : images[active];
 
   return (
-    <figure className="mt-10 border-t border-hairline pt-6">
-      <figcaption className="label-mono mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10.5px]">
-        <span className="text-chrome-lo">gallery</span>
-        {title === project ? null : <span className="text-paper-2">{title}</span>}
-        <span className="text-chrome-lo">· {pad(images.length)} plates</span>
-      </figcaption>
-
-      <ul className="flex flex-wrap items-end gap-5">
+    <>
+      <ol>
         {images.map((image, index) => (
-          <li key={image.src} className="max-w-full">
-            <button
-              type="button"
-              onClick={() => setActive(index)}
-              className="group block w-full text-left"
-              aria-label={`Open plate ${pad(index + 1)} — ${image.label}`}
-            >
-              <span className="block border border-hairline bg-ink-1 p-2 transition-colors duration-200 group-hover:border-hairline-strong group-hover:bg-ink-2">
-                <Image
-                  src={image.src}
-                  alt={`${project} — ${image.label}`}
-                  width={image.width}
-                  height={image.height}
-                  sizes={SIZES[image.orientation]}
-                  className={`${FRAME_SIZE[image.orientation]} max-w-full object-cover object-top opacity-85 transition-opacity duration-300 group-hover:opacity-100`}
-                />
+          <li
+            key={image.src}
+            className="border-t border-hairline py-10 first:border-t-0 first:pt-0 md:py-12 md:first:pt-0"
+            data-reveal
+          >
+            <p className="label-mono mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px]">
+              <span className="text-chrome-lo">{pad(index + 1)}</span>
+              <span className="text-paper-1">{image.label}</span>
+              <span className="text-chrome-lo">
+                {image.orientation === "portrait" ? "mobile" : "desktop"} ·{" "}
+                {image.width}×{image.height}
               </span>
+            </p>
 
-              <span className="label-mono mt-3 flex items-center gap-2 text-[10.5px] transition-colors duration-200 group-hover:text-paper-1">
-                <span className="text-chrome-lo">{pad(index + 1)}</span>
-                <span>{image.label}</span>
-                <span className="inline-block text-chrome-lo transition-all duration-300 group-hover:translate-x-1 group-hover:text-chrome-hi">
-                  ↗
-                </span>
-              </span>
-            </button>
+            {image.orientation === "landscape" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActive(index)}
+                  className="group block w-full"
+                  aria-label={`Open plate ${pad(index + 1)} — ${image.label}`}
+                >
+                  <span className={PLATE}>
+                    <Image
+                      src={image.src}
+                      alt={`${project} — ${image.label}`}
+                      width={image.width}
+                      height={image.height}
+                      sizes="(max-width: 768px) 92vw, 1100px"
+                      className="h-auto w-full object-cover opacity-90 transition-opacity duration-300 group-hover:opacity-100"
+                    />
+                  </span>
+                </button>
+                <p className="mt-5 max-w-[68ch] text-[14.5px] leading-[1.7] text-paper-1">
+                  {image.note}
+                </p>
+              </>
+            ) : (
+              <div className="flex flex-col gap-6 md:max-w-[900px] md:flex-row md:items-start md:gap-12">
+                <button
+                  type="button"
+                  onClick={() => setActive(index)}
+                  className="group block shrink-0"
+                  aria-label={`Open plate ${pad(index + 1)} — ${image.label}`}
+                >
+                  <span className={PLATE}>
+                    <Image
+                      src={image.src}
+                      alt={`${project} — ${image.label}`}
+                      width={image.width}
+                      height={image.height}
+                      sizes="(max-width: 768px) 60vw, 260px"
+                      className="h-[340px] w-auto max-w-full object-cover object-top opacity-90 transition-opacity duration-300 group-hover:opacity-100 md:h-[500px]"
+                    />
+                  </span>
+                </button>
+                <p className="max-w-[46ch] text-[14.5px] leading-[1.7] text-paper-1 md:pt-2">
+                  {image.note}
+                </p>
+              </div>
+            )}
           </li>
         ))}
-      </ul>
+      </ol>
 
       <dialog
         ref={dialogRef}
@@ -124,7 +144,7 @@ export function ProjectGallery({
         {plate ? (
           <div className="flex h-full flex-col">
             <div className="flex shrink-0 items-baseline justify-between gap-6 border-b border-hairline px-6 py-4 md:px-10">
-              <p className="label-mono truncate text-[10.5px]">{title}</p>
+              <p className="label-mono truncate text-[10.5px]">{project}</p>
               <button
                 type="button"
                 onClick={() => setActive(null)}
@@ -180,6 +200,6 @@ export function ProjectGallery({
           </div>
         ) : null}
       </dialog>
-    </figure>
+    </>
   );
 }

@@ -457,6 +457,80 @@
     }
   }
 
+  .panel {
+    position: relative;
+    border: 1px solid var(--color-hairline);
+    background: linear-gradient(180deg, var(--color-ink-2), var(--color-ink-1) 60%);
+    box-shadow:
+      inset 0 1px color-mix(in srgb, var(--color-paper-0) 6%, transparent),
+      0 1px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .ticks {
+    background-image:
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong)),
+      linear-gradient(var(--color-hairline-strong), var(--color-hairline-strong));
+    background-position: 0 0, 0 0, 100% 0, 100% 0, 0 100%, 0 100%, 100% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    background-size: 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px;
+  }
+
+  .exhibit-sweep {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .exhibit-sweep::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -60%;
+    width: 45%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-chrome-hi) 5%, transparent),
+      transparent
+    );
+    transform: skew(-12deg);
+    transition: transform 700ms var(--ease-instrument);
+  }
+
+  .group:hover .exhibit-sweep::after {
+    transform: skew(-12deg) translate(340%);
+  }
+
+  .chrome-rule {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-chrome-lo) 18%,
+      var(--color-chrome-hi) 50%,
+      var(--color-chrome-lo) 82%,
+      transparent 100%
+    );
+  }
+
+  .readout-value {
+    color: var(--color-paper-2);
+    transition: color 700ms var(--ease-instrument);
+  }
+
+  .group:hover .readout-value {
+    color: var(--color-paper-0);
+  }
+
   .trace-node {
     position: absolute;
     top: 40px;
