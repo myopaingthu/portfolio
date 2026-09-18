@@ -457,6 +457,30 @@
     }
   }
 
+  .trace-node {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    display: none;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--color-hairline-strong);
+    background: var(--color-ink-1);
+    transition: all 500ms var(--default-transition-timing-function);
+  }
+
+  .trace-lit {
+    border-color: var(--color-chrome-hi);
+    background: var(--color-chrome-hi);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-chrome-hi) 45%, transparent);
+  }
+
+  @media (min-width: 768px) {
+    .trace-node {
+      display: block;
+    }
+  }
+
   .grain {
     position: relative;
   }

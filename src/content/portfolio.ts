@@ -3,7 +3,7 @@ export const personalInfo = {
   name: "Myo Paing Thu",
   title: "Software Engineer",
   tagline: "Building modern web experiences!",
-  description: "Results-driven Software Engineer with 5+ years of experience in FinTech, Core Banking, E-commerce, and Japanese Web Solutions. I love building scalable, secure, and impactful software.",
+  description: "Results-driven Software Engineer with 5+ years of experience across SaaS, Financial Services, Digital Health, E-commerce, and HR Tech. I love building scalable, secure, and impactful software.",
   heroHighlights: ["PHP", "JavaScript", "Laravel", "Vue", "React"],
   currentFocus: "Backend, Frontend, AI, and Cloud",
   experience: "5+ years of full-stack delivery",
@@ -381,7 +381,7 @@ export const navItems = [
 ];
 
 export const availability = {
-  intro: "I'm available for full-time opportunities and impactful collaborations in FinTech, operations tooling, and product-led initiatives.",
+  intro: "I'm available for full-time opportunities and impactful collaborations across SaaS, financial services, digital health and HR tech.",
   points: [
     "Based in Thailand with remote collaboration across time zones.",
     "Passionate about end-to-end product delivery and engineering mentorship.",

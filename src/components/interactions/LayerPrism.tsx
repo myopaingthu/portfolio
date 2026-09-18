@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState, type PointerEvent } from "react";
 import { prism } from "@/content/site";
 
@@ -48,9 +47,6 @@ export function LayerPrism() {
     <div className="prism" data-layer={active}>
       <p className="prism-topline">
         <span>{topline}</span>
-        <svg className="prism-aperture" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="m3 8 9-5 9 5-9 5-9-5Zm0 4 9 5 9-5M3 16l9 5 9-5" />
-        </svg>
       </p>
 
       <div
@@ -125,17 +121,12 @@ export function LayerPrism() {
       </div>
 
       <div className="prism-description" data-field-mask>
-        <p className="prism-surface">{current.surface}</p>
         <p className="mt-1.5 text-[19px] font-medium leading-[1.3] tracking-[-0.025em] text-paper-0">
           {current.title}
         </p>
         <p className="mt-2 min-h-[42px] max-w-[42ch] text-[13px] leading-[1.6] text-paper-1">
           {current.body}
         </p>
-        <Link href={current.link.href} className="prism-link">
-          {current.link.label}
-          <span aria-hidden="true">↗</span>
-        </Link>
       </div>
 
       <noscript>

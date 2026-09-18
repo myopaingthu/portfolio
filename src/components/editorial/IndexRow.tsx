@@ -20,7 +20,7 @@ export function IndexRow({
       <span className="label-mono mt-3 shrink-0 text-[11px]">{index}</span>
 
       <span className="flex-1">
-        <span className="block text-editorial font-semibold tracking-[-0.015em] text-paper-0">
+        <span className="block text-editorial font-semibold tracking-[-0.015em] text-paper-1 transition-colors duration-300 group-hover:text-paper-0">
           {title}
         </span>
         <span className="mt-3 block max-w-[62ch] font-mono text-[12.5px] leading-[1.75] text-paper-2 transition-colors group-hover:text-chrome-mid">

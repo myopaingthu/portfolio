@@ -5,7 +5,7 @@ import { experienceTimeline, personalInfo } from "@/content/portfolio";
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Five roles across core banking, FinTech, AI automation, e-commerce and Japanese web systems.",
+    "Five roles across SaaS, financial services, digital health, e-commerce and HR tech.",
 };
 
 export default function ExperiencePage() {
@@ -22,7 +22,7 @@ export default function ExperiencePage() {
           {personalInfo.description}
         </p>
         <p className="label-mono mt-12" data-hero-reveal data-field-mask>
-          on file: 05 roles · fintech · core banking · ai · japanese web
+          on file: 05 roles · saas · finance · health · commerce · hr
         </p>
       </header>
 

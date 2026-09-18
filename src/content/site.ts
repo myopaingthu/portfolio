@@ -4,7 +4,7 @@ export const site = {
   url: "https://myopaingthu.dev",
   tagline: "backend, frontend, and the systems between",
   description:
-    "Software engineer with 5+ years across FinTech, core banking, e-commerce and Japanese web solutions. Laravel, NestJS, React, Vue — strategy through production code.",
+    "Software engineer with 5+ years across SaaS, financial services, digital health, e-commerce and HR tech. Laravel, NestJS, React, Vue — strategy through production code.",
   location: "Bangkok, Thailand",
   since: 2021,
 };
@@ -129,14 +129,14 @@ export const doors = [
   {
     index: "01",
     title: "The work",
-    body: "Nineteen shipped projects across banking, e-commerce and automation platforms.",
+    body: "Nineteen shipped projects across SaaS, financial services, e-commerce and automation platforms.",
     foot: "projects · case studies",
     href: "/projects",
   },
   {
     index: "02",
     title: "The record",
-    body: "Five roles, five years. Core banking, FinTech, AI automation, Japanese web systems.",
+    body: "Five roles, five years. SaaS, financial services, digital health, e-commerce and HR tech.",
     foot: "experience · timeline",
     href: "/experience",
   },
@@ -179,6 +179,6 @@ export const capabilities = [
 export const readouts = [
   { label: "years shipping", value: "05", note: "in practice since 2021" },
   { label: "projects", value: "19", note: "10 professional · 09 personal" },
-  { label: "roles", value: "05", note: "banking · fintech · ai" },
+  { label: "roles", value: "05", note: "saas · finance · health · hr" },
   { label: "manual error cut", value: "30%", note: "core banking ops" },
 ];

@@ -62,12 +62,6 @@ export default function Home() {
               >
                 Start a conversation
               </Link>
-              <Link
-                href="/about"
-                className="inline-flex min-h-12 items-center px-2.5 text-[13px] font-medium text-paper-1 underline decoration-chrome-lo underline-offset-[5px] transition-colors duration-200 hover:text-paper-0"
-              >
-                Read the notes
-              </Link>
             </div>
           </div>
 
@@ -78,7 +72,8 @@ export default function Home() {
       </section>
 
       <section className="border-b border-hairline">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 md:pr-10 md:pl-24">
+          <span className="trace-node" aria-hidden="true" data-trace-node />
           <Eyebrow className="mb-8">{thesis.eyebrow}</Eyebrow>
 
           <h2
@@ -113,7 +108,8 @@ export default function Home() {
       </section>
 
       <section className="border-b border-hairline">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 md:pr-10 md:pl-24">
+          <span className="trace-node" aria-hidden="true" data-trace-node />
           <Eyebrow className="mb-10">three doors</Eyebrow>
 
           <div
@@ -146,7 +142,8 @@ export default function Home() {
       </section>
 
       <section className="border-b border-hairline">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 md:pr-10 md:pl-24">
+          <span className="trace-node" aria-hidden="true" data-trace-node />
           <Eyebrow className="mb-12">capability index</Eyebrow>
           <div className="border-t border-hairline">
             {capabilities.map((capability) => (
@@ -157,7 +154,8 @@ export default function Home() {
       </section>
 
       <section className="border-b border-hairline">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 md:pr-10 md:pl-24">
+          <span className="trace-node" aria-hidden="true" data-trace-node />
           <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
             <Eyebrow>selected work</Eyebrow>
             <Link
@@ -204,7 +202,8 @@ export default function Home() {
       </section>
 
       <section>
-        <div className="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 md:pr-10 md:pl-24">
+          <span className="trace-node" aria-hidden="true" data-trace-node />
           <div className="flex flex-col justify-between gap-10 border border-hairline p-10 md:flex-row md:items-end md:p-14">
             <div>
               <Eyebrow className="mb-6">the direct line</Eyebrow>

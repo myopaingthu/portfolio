@@ -231,6 +231,58 @@ Duration is 700ms — the reveal duration, so number and panel land together.
 
 ---
 
+### 3.2 Trace nodes — the margin checkbox
+
+A 9px square in the left margin of every section below the hero, dark at rest and lit once you
+reach it. Measured, not guessed:
+
+```css
+.trace-node {                      /* at rest */
+  position: absolute; top: 40px; left: 48px;
+  width: 9px; height: 9px;
+  border: 1px solid var(--color-hairline-strong);
+  background: var(--color-ink-1);
+  transition: all 500ms var(--default-transition-timing-function);
+}
+.trace-lit {                       /* passed */
+  border-color: var(--color-chrome-hi);
+  background: var(--color-chrome-hi);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-chrome-hi) 45%, transparent);
+}
+```
+
+**It latches, and it reverses.** On the reference, a node lit at scroll 900 is still lit at 2400
+with the node 1,465px above the viewport — it does not go out when it leaves the top. Scroll back
+to zero and every one of them goes dark again. That is `onEnter` / `onLeaveBack`, *not*
+`toggleClass` (whose default `end` would also unlight on `onLeave`) and not `once: true`:
+
+```js
+ScrollTrigger.create({
+  trigger: node,
+  start: "top 75%",
+  onEnter:     () => node.classList.add("trace-lit"),
+  onLeaveBack: () => node.classList.remove("trace-lit"),
+});
+```
+
+**The threshold is `top 75%`.** Bisected on a 900px viewport: the node is dark with its top at
+674px and lit at 670px, so it fires at ~672px — 74.7% of the viewport, within 3px of the round
+number. The trigger is the node itself, not its section; triggering on the section would have lit
+it 40px early, and it does not.
+
+**It needs a margin to live in.** The reference insets the content column (`md:pl-14` inside a
+`px-10` wrapper) so the node can sit at `-left-12` without leaving the page. Ours gets there with
+`md:pl-24` on the section wrapper: node at x=48, content at x=96, the same two numbers the
+reference lands on. The hero stays full-bleed and has no node — the trace starts at the thesis.
+
+Below `md` the node is `display: none`; there is no margin to put it in.
+
+The reference also draws a 1.5px vertical line down that margin (a `stroke-dasharray` path whose
+`stroke-dashoffset` unwinds with scroll) threading the nodes together. We have not built it. The
+nodes read fine alone — at any real scroll position the line is barely visible behind them.
+
+---
+
 ## 4. Smooth scroll (Lenis)
 
 ```js

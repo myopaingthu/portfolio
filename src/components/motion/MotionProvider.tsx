@@ -17,6 +17,7 @@ const REVEAL = "[data-reveal]:not([data-reveal-group] [data-reveal])";
 const GROUP = "[data-reveal-group]";
 const HERO = "[data-hero-reveal]";
 const COUNT = "[data-count]";
+const TRACE = "[data-trace-node]";
 
 const ScrollEngine = createContext<RefObject<Lenis | null> | null>(null);
 
@@ -57,6 +58,17 @@ function registerCounters() {
       ease: "power3.out",
       onUpdate: render,
       scrollTrigger: { trigger: el, start: "top 88%", once: true },
+    });
+  }
+}
+
+function registerTraceNodes() {
+  for (const node of gsap.utils.toArray<HTMLElement>(TRACE)) {
+    ScrollTrigger.create({
+      trigger: node,
+      start: "top 75%",
+      onEnter: () => node.classList.add("trace-lit"),
+      onLeaveBack: () => node.classList.remove("trace-lit"),
     });
   }
 }
@@ -144,6 +156,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       }
 
       registerCounters();
+      registerTraceNodes();
     });
 
     let pending = 0;

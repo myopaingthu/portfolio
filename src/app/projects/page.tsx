@@ -7,7 +7,7 @@ import { projects, galleries } from "@/content/portfolio";
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Nineteen shipped projects across core banking, FinTech, e-commerce, AI automation and developer tooling.",
+    "Nineteen shipped projects across SaaS, financial services, digital health, e-commerce, HR tech and developer tooling.",
 };
 
 const professional = projects.filter((p) => p.category === "Professional Work");
@@ -93,9 +93,9 @@ export default function ProjectsPage() {
           shelved.
         </h1>
         <p className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1" data-hero-reveal data-field-mask>
-          Nineteen projects across core banking, FinTech, e-commerce, AI automation
-          and developer tooling. Ten in production for employers and clients, nine
-          built to learn something specific.
+          Nineteen projects across SaaS, financial services, digital health,
+          e-commerce and HR tech. Ten in production for employers and clients,
+          nine built to learn something specific.
         </p>
         <p className="label-mono mt-12" data-hero-reveal data-field-mask>
           on file: 19 projects · 10 professional · 09 personal
