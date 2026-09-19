@@ -8,7 +8,7 @@ const ParticleField = dynamic(
   { ssr: false }
 );
 
-const NO_AMBIENT = [/^\/projects\/[^/]+\/?$/, /^\/experience\/?$/];
+const NO_AMBIENT = [/^\/projects\/[^/]+\/?$/, /^\/experience\/?$/, /^\/about\/?$/];
 
 export function HeroField() {
   const pathname = usePathname();

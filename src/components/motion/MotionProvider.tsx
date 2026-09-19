@@ -19,7 +19,8 @@ const GROUP = "[data-reveal-group]";
 const HERO = "[data-hero-reveal]";
 const COUNT = "[data-count]";
 const TRACE = "[data-trace-node]";
-const STORY = "[data-story]";
+const STORY = '[data-story]:not([data-story="assembly"])';
+const ASSEMBLY = '[data-story="assembly"]';
 const SCRUB_WIDTH = "(min-width: 1024px)";
 const STACK_WIDTH = "(max-width: 1023px)";
 
@@ -155,6 +156,89 @@ function registerStory() {
   return media;
 }
 
+function registerAssembly() {
+  const media = gsap.matchMedia();
+
+  for (const assembly of gsap.utils.toArray<HTMLElement>(ASSEMBLY)) {
+    const cards = gsap.utils.toArray<HTMLElement>(
+      assembly.querySelectorAll("[data-story-pane]")
+    );
+    const summary = assembly.querySelector<HTMLElement>("[data-assembly-summary]");
+
+    if (cards.length < 2) continue;
+
+    media.add(SCRUB_WIDTH, () => {
+      assembly.classList.add("toolkit-scrub");
+
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: assembly,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      });
+
+      timeline.fromTo(
+        cards,
+        {
+          x: (_, card) => Number((card as HTMLElement).dataset.assemblyX ?? 0),
+          y: (_, card) => Number((card as HTMLElement).dataset.assemblyY ?? 0),
+          rotation: (_, card) =>
+            Number((card as HTMLElement).dataset.assemblyRotation ?? 0),
+          scale: (_, card) =>
+            Number((card as HTMLElement).dataset.assemblyScale ?? 1),
+          opacity: 0.9,
+        },
+        {
+          x: 0,
+          y: 0,
+          rotation: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power3.out",
+          stagger: 0.04,
+        },
+        0.42
+      );
+
+      if (summary) {
+        timeline.fromTo(
+          summary,
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.2, ease: "power3.out" },
+          0.88
+        );
+      }
+
+      return () => {
+        timeline.scrollTrigger?.kill();
+        timeline.revert();
+        assembly.classList.remove("toolkit-scrub");
+      };
+    });
+
+    media.add(STACK_WIDTH, () => {
+      const tween = gsap.from(cards, {
+        opacity: 0,
+        y: 14,
+        duration: 0.7,
+        ease: "power3.out",
+        stagger: 0.04,
+        scrollTrigger: { trigger: assembly, start: "top 88%", once: true },
+      });
+
+      return () => {
+        tween.scrollTrigger?.kill();
+        tween.revert();
+      };
+    });
+  }
+
+  return media;
+}
+
 export function MotionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const lenisRef = useRef<Lenis | null>(null);
@@ -215,7 +299,8 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     if (lenis) lenis.scrollTo(target, { immediate: true });
     else window.scrollTo({ top: target, behavior: "instant" });
 
-    let media: gsap.MatchMedia | undefined;
+    let storyMedia: gsap.MatchMedia | undefined;
+    let assemblyMedia: gsap.MatchMedia | undefined;
 
     const context = gsap.context(() => {
       const hero = gsap.utils.toArray<HTMLElement>(HERO);
@@ -255,7 +340,8 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
       registerCounters();
       registerTraceNodes();
-      media = registerStory();
+      storyMedia = registerStory();
+      assemblyMedia = registerAssembly();
     });
 
     let pending = 0;
@@ -279,7 +365,8 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearTimeout(pending);
       observer.disconnect();
-      media?.revert();
+      storyMedia?.revert();
+      assemblyMedia?.revert();
       context.revert();
     };
   }, [pathname]);

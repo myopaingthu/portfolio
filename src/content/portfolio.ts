@@ -11,31 +11,54 @@ export const personalInfo = {
     degree: "Bachelor of Computer Science | Software Engineering",
     institution: "University of Information Technology, Yangon",
   },
-  about: "I specialize in both frontend and backend development, with expertise in PHP, JavaScript, Vue.js, React.js, Node.js, and advanced proficiency in Laravel. I enjoy collaborating in teams and embracing new technologies to deliver efficient projects.",
+  about: "I build dependable web products from interface to infrastructure, carrying the work across product UI, APIs, data, and delivery.",
 };
 
 export const skillGroups = [
   {
-    title: "Frontend",
+    title: "Interface systems",
     icon: "Code",
+    signal: "UI → STATE",
+    description: "Accessible interfaces, stateful workflows, and design systems that stay fast.",
     items: ["HTML", "CSS", "JavaScript", "Vue.js", "React.js", "Material UI", "Tailwind CSS", "Shadcn UI"],
   },
   {
-    title: "Backend",
+    title: "Application core",
     icon: "Server",
+    signal: "API → DOMAIN",
+    description: "Secure APIs and product logic, from Laravel monoliths to NestJS services.",
     items: ["PHP", "Laravel", "Express.js", "Node.js", "NestJS", "Livewire", "Filament"],
   },
   {
-    title: "Database",
+    title: "Data layer",
     icon: "Database",
+    signal: "QUERY → CACHE",
+    description: "Transactional schemas, document stores, caching, and real-time data.",
     items: ["MySQL", "MongoDB", "MS SQL Server", "Redis", "Firebase"],
   },
   {
-    title: "DevOps & Tools",
+    title: "Delivery",
     icon: "Wrench",
+    signal: "COMMIT → CLOUD",
+    description: "Containers, cloud deployment, source control, and automated delivery.",
     items: ["Docker", "AWS", "Git", "GitHub", "GitLab", "Bitbucket", "GitLab CI/CD"],
   },
 ];
+
+export const aboutPage = {
+  eyebrow: "about — the operator",
+  headline: ["One person.", "Whole stack."],
+  register: "in practice since 2021 · bangkok · remote across time zones",
+  profileLabel: "the operator, in short",
+  workEyebrow: "how I work",
+  toolkit: {
+    ariaLabel: "Four engineering disciplines assembling into one full-stack practice",
+    eyebrow: "the toolkit: four disciplines, one pair of hands",
+    count: "04 parts",
+    assembled: "assembled — interface to infrastructure",
+    note: "one builder · no handoff",
+  },
+};
 
 export const experienceTimeline = [
   {
