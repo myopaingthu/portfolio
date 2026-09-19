@@ -281,6 +281,66 @@ The reference also draws a 1.5px vertical line down that margin (a `stroke-dasha
 `stroke-dashoffset` unwinds with scroll) threading the nodes together. We have not built it. The
 nodes read fine alone — at any real scroll position the line is barely visible behind them.
 
+### 3.3 The scrubbed story — `act ii` on the reference's `/about`
+
+The one place the reference pins the viewport. Measured at 1440x900, sampling 41 scroll positions
+across the section:
+
+| what | measured |
+| --- | --- |
+| outer track | `h-[520vh]` — 4680px, exactly `chapters x 104vh` |
+| inner stage | `sticky top-0 h-screen overflow-hidden`, `flex-col justify-center` |
+| scroll span | `trackHeight - vh` = 3780px |
+| grid | `grid-cols-[minmax(0,4fr)_minmax(0,7fr)] gap-x-16` |
+| pane | `absolute inset-0`, `translate-y-3 opacity-0` -> `translate-y-0 opacity-100` |
+| pane transition | `transition-all duration-500 ease-out` |
+| numeral / period | `opacity-0` -> `opacity-100`, `transition-opacity duration-500` |
+| numeral type | `clamp(9rem,16vw,15rem)`, `text-transparent`, `-webkit-text-stroke: 1px hairline-strong` |
+| playhead | 6x6, `rounded-[1px]`, `radial-gradient(circle, chrome-hi, chrome-mid 70%)`, `-top-[3px] -ml-[3px]` |
+
+**Chapter index is equal fifths of one progress value, not five triggers.**
+`index = clamp(floor(progress * n), 0, n - 1)`. Measured flips at p = 0.20 / 0.40 / 0.60 / 0.80,
+and every pane opacity readback matched a single active index — never two mid-crossfade except
+during the 500ms CSS transition itself.
+
+**The playhead is not smoothed.** `translateX(progress * railWidth)` written straight from the
+scroll position: headX/railWidth tracked progress to three decimals at all 41 samples, and after a
+jump from p=0 to p=0.6 it was already at the target 816px on the first sample 0ms later. There is no
+lerp, no scrub inertia. A `gsap.quickSetter(head, "x", "px")` inside `onUpdate` is the whole thing.
+
+**Below the breakpoint the pin does not exist.** Not `display:none` — the pinned tree is *absent
+from the DOM* at 390px and a stacked list of `<article>`s is rendered instead, each with its own
+ghost numeral, revealed by the ordinary reveal system. The rail and playhead are not rendered at
+all. We get the same result from one DOM tree: the stacked form is the default, and a `story-scrub`
+class (added only by `gsap.matchMedia("(min-width: 1024px)")`) switches the panes to
+`absolute inset-0`, the stage to `sticky`, and the track to `calc(var(--story-chapters) * 104vh)`.
+One tree, no duplicated copy, no hydration swap — and because the class only ever arrives from JS,
+no-JS and `prefers-reduced-motion` both land on the stacked form for free, with no extra CSS.
+
+**We break from the reference on one thing: the rail's ticks are the chapters.** The reference's
+rail marks industry eras that have nothing to do with its five chapters, spaced by
+`justify-between`. Ours marks the five role start dates, so a tick has to be somewhere the playhead
+actually reaches. Ticks sit at `(i + 0.5) / n` — the centre of chapter i's dwell — so the head
+arrives on a checkpoint exactly halfway through that chapter and the tick lights with it. Equal
+dwell per chapter is preserved exactly; only the tick positions are ours.
+
+**We use `lg`, not `md`.** The reference switches at `md` (768px). With five checkpoints on the rail
+the outer labels clip below ~1024px, and a 4fr/7fr split at 768px leaves ~370px for 62ch of prose.
+1024px is where both stop being cramped.
+
+**Don't put `data-count` or `data-reveal` inside a scrubbed pane.** Both fire on `top 88%`, and all
+five panes share one position, so every counter in the section would run at once behind chapter 1
+and be finished before the reader reaches chapter 4. The readouts render static; the crossfade is
+the motion.
+
+**The ambient band cannot coexist with a pinned stage.** Ambient home is
+`home.y * halfExtent.y + scrollWorld` — anchored to the document, not the viewport. Pinning holds
+the viewport still for 520vh while the band keeps travelling, so it sweeps straight up through the
+pinned copy: on the first build it sat on the rail at chapter 1 and over the prose by chapter 3.
+`/experience` joins `/projects/[slug]` in `HeroField`'s `NO_AMBIENT` list (see 6.14). The cursor blob
+is unaffected and stays. The reference has no band on `/about` at all — the motes visible there are
+other readers' cursors.
+
 ---
 
 ## 4. Smooth scroll (Lenis)
@@ -995,6 +1055,18 @@ The renderer, buffers and compute pipeline are built once, in an effect keyed on
 only — `ambient` is deliberately absent from that dependency array. Navigating between `/projects`
 and a case file toggles a single float on the GPU; it does not tear down and rebuild 118,000
 particles' worth of state.
+
+The route list has since grown a second entry. `HeroField` holds it:
+
+```js
+const NO_AMBIENT = [/^\/projects\/[^/]+\/?$/, /^\/experience\/?$/];
+```
+
+`/experience` is there for a different reason than the case files. A case file is a reading page and
+the band was simply noise on it. `/experience` pins its viewport for 520vh (3.3), and ambient home
+is `home.y * halfExtent.y + scrollWorld` — document-anchored. A held viewport plus a travelling band
+means the band sweeps vertically through stationary copy, which is worse than either alone. Any
+future pinned section has to join this list.
 
 ---
 

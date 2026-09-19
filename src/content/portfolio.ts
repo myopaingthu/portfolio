@@ -632,3 +632,91 @@ export const availability = {
     "Focused on building resilient, secure, and user-centric platforms.",
   ],
 };
+
+export const provenance = {
+  eyebrow: "act ii — the provenance: five rooms, november 2021 to now",
+  rail: "every room ran a different stack · every room, the same job: ship it and keep it up · scroll — the record plays",
+  chapters: [
+    {
+      mark: "2021.11",
+      tick: "nov 2021",
+      company: "metateam myanmar",
+      period: "nov 2021 — jan 2023",
+      role: "Junior Developer",
+      title: "The first",
+      accent: "brief.",
+      body: [
+        "Two years inside Japanese systems, building and maintaining APIs and admin portals beside senior engineers. An Evaluation Management System for a restaurant group's operational needs, the Japan television programme guide in Vue 3 Composition API and TypeScript, and a book guide and review system for students.",
+        "None of it was mine to design. All of it was mine to keep running — which is the part of the job nobody writes a tutorial for.",
+      ],
+      quote:
+        "The room where I learned what a maintained codebase actually costs.",
+    },
+    {
+      mark: "2023.01",
+      tick: "jan 2023",
+      company: "super seven stars",
+      period: "jan 2023 — jan 2024",
+      role: "Backend Developer",
+      title: "Backend,",
+      accent: "end to end.",
+      body: [
+        "An on-demand grocery and food service platform: APIs and admin portals carrying real-time, location-based delivery matching — the first system where the algorithm, not the CRUD, was the hard part.",
+        "Then a classified car marketplace, built out in full: APIs, admin portals, FCM push notifications and payment integration. Every stage of the lifecycle, from architecture to the performance pass at the end.",
+      ],
+      quote: "The year the work stopped being tickets and started being architecture.",
+    },
+    {
+      mark: "2024.01",
+      tick: "jan 2024",
+      company: "uab bank",
+      period: "jan 2024 — present",
+      role: "Software Engineer",
+      title: "Core",
+      accent: "banking.",
+      body: [
+        "Core banking migration work: lifting the Clearing House and Operation Cash Management systems off legacy stacks onto modern PHP and MS SQL Server, then automating the manual steps around them.",
+        "Alongside it, product: a social system with multimedia management and an in-app gift engine for real-time rewards, built on Laravel, MySQL and Livewire with dynamic form control in the admin backend. A payroll processing system for internal teams and partner companies. Admin and client portals for the Sermal feature inside the uab Pay wallet, with role-based permissions and dynamic forms.",
+        "And the part that does not appear in a changelog: onboarding interns and junior engineers, and holding up the support modules nobody volunteers for.",
+      ],
+      quote: "Regulated money is the strictest reviewer a codebase ever gets.",
+      readouts: [
+        { value: "30", suffix: "%", label: "human error reduced" },
+        { value: "02", suffix: "", label: "legacy systems migrated" },
+      ],
+    },
+    {
+      mark: "2025.02",
+      tick: "feb 2025",
+      company: "phluid worldwide",
+      period: "feb 2025 — present",
+      role: "Software Engineer",
+      title: "Compliance,",
+      accent: "HR, billing.",
+      body: [
+        "An ISO compliance platform in Laravel Filament — applications for certification carried through complex file management, a built-in document editor, and AI assistance where it earns its place.",
+        "An HR management system built around the parts that have to be right: secure employee data handling, attendance tracking, role-based access.",
+        "And a multi-tenant ISP billing and subscription platform in NestJS, MongoDB and React — automated billing cycles and invoice generation running on Bull over Redis with Puppeteer, holding recurring charges at ninety per cent automated.",
+      ],
+      quote: "Three products, three stacks, one standard for what counts as done.",
+      readouts: [
+        { value: "90", suffix: "%", label: "recurring charges automated" },
+        { value: "03", suffix: "", label: "platforms in production" },
+      ],
+    },
+    {
+      mark: "2025.06",
+      tick: "jun 2025",
+      company: "noca.ai",
+      period: "jun 2025 — dec 2025",
+      role: "Software Engineer",
+      title: "Prompt to",
+      accent: "workflow.",
+      body: [
+        "Frontend and backend on an enterprise-grade, no-code automation platform in React and Node.js — the kind of system whose users are not engineers and whose failures are therefore not forgivable.",
+        "Complex workflow builders that let a user assemble a 'digital employee' by wiring Salesforce, Google Drive and Dropbox into one another. And the prompt-to-workflow interface: plain English in, a functioning automated business application out.",
+      ],
+      quote: "Making the hard thing look like one sentence is the whole discipline.",
+    },
+  ],
+};

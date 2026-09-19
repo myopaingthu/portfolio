@@ -18,7 +18,9 @@ trust its specifics.
 - Easings are `--ease-out`, `--ease-instrument`, or the Tailwind default. Nothing else.
 - Every animation needs a `prefers-reduced-motion: reduce` off-switch.
 - Reveals are declarative: add `data-reveal` to an element or `data-reveal-group` to a container.
-  Never hand-roll a ScrollTrigger in a component.
+  Scroll-scrubbed sections are too: `data-story` on the section, `data-story-pane` / `-tick` /
+  `-head` inside. Never hand-roll a ScrollTrigger in a component — every one of these lives in
+  `MotionProvider`.
 - No decorative motion. No tilt, glow, spotlight, aurora, parallax, blobs, or 3D card effects.
   Two components are the deliberate exceptions and the only ones: `graphics/ParticleField` and
   `interactions/LayerPrism` (perspective, 3D transforms, pointer tilt — see `animation.md` §5.5).
@@ -34,7 +36,7 @@ trust its specifics.
 src/app/          routes; layout.tsx wires fonts + providers
 src/components/
   shell/          Header, Footer, PageShell
-  editorial/      Eyebrow, DisplayHeading, ProseSection, IndexRow, RegistryRow, MetricReadout
+  editorial/      Eyebrow, IndexRow, MetricReadout, ProjectCard, ProjectExhibit, ProvenanceStory
   interactions/   MagneticCard, RevealGroup
   motion/         MotionProvider, RouteTransition
   graphics/       ParticleField (client-only, dynamic import)

@@ -8,11 +8,11 @@ const ParticleField = dynamic(
   { ssr: false }
 );
 
-const NO_AMBIENT = /^\/projects\/[^/]+\/?$/;
+const NO_AMBIENT = [/^\/projects\/[^/]+\/?$/, /^\/experience\/?$/];
 
 export function HeroField() {
   const pathname = usePathname();
-  const ambient = !NO_AMBIENT.test(pathname);
+  const ambient = !NO_AMBIENT.some((route) => route.test(pathname));
 
   return <ParticleField maskSelector="[data-field-mask]" ambient={ambient} />;
 }

@@ -19,6 +19,9 @@ const GROUP = "[data-reveal-group]";
 const HERO = "[data-hero-reveal]";
 const COUNT = "[data-count]";
 const TRACE = "[data-trace-node]";
+const STORY = "[data-story]";
+const SCRUB_WIDTH = "(min-width: 1024px)";
+const STACK_WIDTH = "(max-width: 1023px)";
 
 const ScrollEngine = createContext<RefObject<Lenis | null> | null>(null);
 
@@ -72,6 +75,84 @@ function registerTraceNodes() {
       onLeaveBack: () => node.classList.remove("trace-lit"),
     });
   }
+}
+
+function registerStory() {
+  const media = gsap.matchMedia();
+
+  for (const story of gsap.utils.toArray<HTMLElement>(STORY)) {
+    const track = story.querySelector<HTMLElement>(".story-track");
+    const head = story.querySelector<HTMLElement>("[data-story-head]");
+    const panes = gsap.utils.toArray<HTMLElement>(
+      story.querySelectorAll("[data-story-pane]")
+    );
+    const ticks = gsap.utils.toArray<HTMLElement>(
+      story.querySelectorAll("[data-story-tick]")
+    );
+
+    if (!track || panes.length < 2) continue;
+
+    media.add(SCRUB_WIDTH, () => {
+      story.classList.add("story-scrub");
+
+      const setX = head ? gsap.quickSetter(head, "x", "px") : null;
+      let railWidth = head?.parentElement?.clientWidth ?? 0;
+      let current = -1;
+
+      const paint = (progress: number) => {
+        setX?.(progress * railWidth);
+
+        const next = Math.min(
+          panes.length - 1,
+          Math.max(0, Math.floor(progress * panes.length))
+        );
+        if (next === current) return;
+        current = next;
+        panes.forEach((pane, i) => pane.toggleAttribute("data-active", i === next));
+        ticks.forEach((tick, i) => tick.toggleAttribute("data-active", i === next));
+      };
+
+      const trigger = ScrollTrigger.create({
+        trigger: track,
+        start: "top top",
+        end: "bottom bottom",
+        onRefresh: (self) => {
+          railWidth = head?.parentElement?.clientWidth ?? 0;
+          paint(self.progress);
+        },
+        onUpdate: (self) => paint(self.progress),
+      });
+
+      return () => {
+        trigger.kill();
+        story.classList.remove("story-scrub");
+        panes.forEach((pane, i) => pane.toggleAttribute("data-active", i === 0));
+        ticks.forEach((tick, i) => tick.toggleAttribute("data-active", i === 0));
+        if (head) gsap.set(head, { clearProps: "transform" });
+      };
+    });
+
+    media.add(STACK_WIDTH, () => {
+      const tweens = panes.map((pane) =>
+        gsap.from(pane, {
+          opacity: 0,
+          y: 14,
+          duration: 0.7,
+          ease: "power3.out",
+          scrollTrigger: { trigger: pane, start: "top 88%", once: true },
+        })
+      );
+
+      return () => {
+        tweens.forEach((tween) => {
+          tween.scrollTrigger?.kill();
+          tween.revert();
+        });
+      };
+    });
+  }
+
+  return media;
 }
 
 export function MotionProvider({ children }: { children: ReactNode }) {
@@ -134,6 +215,8 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     if (lenis) lenis.scrollTo(target, { immediate: true });
     else window.scrollTo({ top: target, behavior: "instant" });
 
+    let media: gsap.MatchMedia | undefined;
+
     const context = gsap.context(() => {
       const hero = gsap.utils.toArray<HTMLElement>(HERO);
       if (hero.length) {
@@ -172,6 +255,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
       registerCounters();
       registerTraceNodes();
+      media = registerStory();
     });
 
     let pending = 0;
@@ -195,6 +279,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearTimeout(pending);
       observer.disconnect();
+      media?.revert();
       context.revert();
     };
   }, [pathname]);
