@@ -4,7 +4,7 @@ An editorial portfolio for Myo Paing Thu, built to make the work, systems, and t
 
 ## Live site
 
-Live URL: _Add deployment URL here._
+Live URL: https://myopaingthu.vercel.app/
 
 ## Built with
 
