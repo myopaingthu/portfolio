@@ -34,6 +34,10 @@ import {
   createProjection,
   rectToWorld,
 } from "@/lib/particles/projection";
+import {
+  PARTICLE_PARK_EVENT,
+  type ParticleParkDetail,
+} from "@/lib/particles/parking";
 
 type AmbientUniform = { value: number };
 
@@ -298,6 +302,43 @@ export function ParticleField({
     let quality = 0;
 
     let worldPerPixel = 0.0023;
+    let scrollOffset = 0;
+    let parkPageScroll = 0;
+    let parkScroll = 0;
+    let parked = false;
+
+    const effectiveScroll = () => (parked ? parkScroll : window.scrollY - scrollOffset);
+
+    const syncScroll = () => {
+      scrollWorld.value = effectiveScroll() * worldPerPixel;
+    };
+
+    const onParticlePark = (event: Event) => {
+      const detail = (event as CustomEvent<ParticleParkDetail>).detail;
+
+      if (detail.reset) {
+        scrollOffset = 0;
+        parkPageScroll = 0;
+        parkScroll = 0;
+        parked = false;
+        syncScroll();
+        return;
+      }
+
+      const next = detail.parked ?? false;
+      if (next === parked) return;
+
+      if (next) {
+        parkScroll = window.scrollY - scrollOffset;
+        parkPageScroll = window.scrollY;
+        parked = true;
+      } else {
+        scrollOffset += window.scrollY - parkPageScroll;
+        parked = false;
+      }
+
+      syncScroll();
+    };
 
     const syncLayout = () => {
       const rect = canvas.getBoundingClientRect();
@@ -306,7 +347,7 @@ export function ParticleField({
       halfExtent.value.set(projection.halfW, projection.halfH, 1);
       worldPerPixel = projection.worldPerPixel;
       pixelToWorld.value = projection.worldPerPixel;
-      scrollWorld.value = window.scrollY * worldPerPixel;
+      syncScroll();
 
       const targets = maskSelector
         ? Array.from(document.querySelectorAll<HTMLElement>(maskSelector)).slice(
@@ -333,7 +374,7 @@ export function ParticleField({
     };
 
     const onScroll = () => {
-      scrollWorld.value = window.scrollY * worldPerPixel;
+      syncScroll();
     };
 
     const resize = () => {
@@ -405,6 +446,14 @@ export function ParticleField({
         window.addEventListener("pointermove", onPointerMove, { passive: true });
         window.addEventListener("pointerleave", onPointerLeave, { passive: true });
         window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener(PARTICLE_PARK_EVENT, onParticlePark);
+        if (document.documentElement.hasAttribute("data-particle-parked")) {
+          onParticlePark(
+            new CustomEvent<ParticleParkDetail>(PARTICLE_PARK_EVENT, {
+              detail: { parked: true },
+            })
+          );
+        }
 
         renderer.setAnimationLoop(() => {
           if (disposed || !renderer) return;
@@ -412,7 +461,7 @@ export function ParticleField({
           const step = frameTime ? Math.min(0.05, (now - frameTime) / 1000) : 0.016;
           frameTime = now;
 
-          scrollWorld.value = window.scrollY * worldPerPixel;
+          syncScroll();
           targetSpeed *= FIELD.speedDecay;
           smoothedSpeed += (targetSpeed - smoothedSpeed) * FIELD.speedRise;
           pointerSpeed.value = smoothedSpeed;
@@ -476,6 +525,7 @@ export function ParticleField({
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerleave", onPointerLeave);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener(PARTICLE_PARK_EVENT, onParticlePark);
       renderer?.setAnimationLoop(null);
       renderer?.dispose();
       material.dispose();

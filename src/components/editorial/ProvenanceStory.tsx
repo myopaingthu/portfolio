@@ -10,7 +10,7 @@ export function ProvenanceStory() {
       className="story border-b border-hairline py-16 md:py-20"
       data-story
       style={{ "--story-chapters": chapters.length } as CSSProperties}
-      aria-label="The record: five rooms, from a junior brief to the automation platform"
+      aria-label="The record: four rooms, from a junior brief to production platforms"
     >
       <Eyebrow
         className="story-eyebrow mb-14 w-fit border border-hairline bg-ink-0 px-3 py-1.5 text-paper-1"

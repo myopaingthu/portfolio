@@ -3,10 +3,6 @@
 Personal portfolio for Myo Paing Thu. Next.js 16 (App Router) · TypeScript · Tailwind v4 ·
 shadcn/ui · GSAP + ScrollTrigger · Lenis · Three.js WebGPU.
 
-Design reference: `animation.md` — measured values from jamiemckaye.com. That file is ground truth
-for motion. `jamiemckaye-website-reference-spec.md` is an unreliable third-party document; do not
-trust its specifics.
-
 ## Rules
 
 - **Do not add code comments.** The code should read without them.

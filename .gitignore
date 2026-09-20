@@ -37,3 +37,9 @@ next-env.d.ts
 
 # playwright mcp research artifacts
 /.playwright-mcp/
+
+# local design and reference notes
+/animation.md
+/CLAUDE.md
+/jamiemckaye-website-reference-spec.md
+/MOTION-SYSTEM.md

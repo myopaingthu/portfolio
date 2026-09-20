@@ -657,7 +657,7 @@ export const availability = {
 };
 
 export const provenance = {
-  eyebrow: "act ii — the provenance: five rooms, november 2021 to now",
+  eyebrow: "act ii — the provenance: four rooms, november 2021 to now",
   rail: "every room ran a different stack · every room, the same job: ship it and keep it up · scroll — the record plays",
   chapters: [
     {
@@ -726,20 +726,6 @@ export const provenance = {
         { value: "90", suffix: "%", label: "recurring charges automated" },
         { value: "03", suffix: "", label: "platforms in production" },
       ],
-    },
-    {
-      mark: "2025.06",
-      tick: "jun 2025",
-      company: "noca.ai",
-      period: "jun 2025 — dec 2025",
-      role: "Software Engineer",
-      title: "Prompt to",
-      accent: "workflow.",
-      body: [
-        "Frontend and backend on an enterprise-grade, no-code automation platform in React and Node.js — the kind of system whose users are not engineers and whose failures are therefore not forgivable.",
-        "Complex workflow builders that let a user assemble a 'digital employee' by wiring Salesforce, Google Drive and Dropbox into one another. And the prompt-to-workflow interface: plain English in, a functioning automated business application out.",
-      ],
-      quote: "Making the hard thing look like one sentence is the whole discipline.",
     },
   ],
 };

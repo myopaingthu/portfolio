@@ -11,6 +11,10 @@ import {
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
 import { recallScroll } from "@/lib/scroll-memory";
+import {
+  resetParticleParking,
+  setParticleParked,
+} from "@/lib/particles/parking";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 
@@ -120,12 +124,18 @@ function registerStory() {
         onRefresh: (self) => {
           railWidth = head?.parentElement?.clientWidth ?? 0;
           paint(self.progress);
+          setParticleParked(self.isActive);
         },
         onUpdate: (self) => paint(self.progress),
+        onEnter: () => setParticleParked(true),
+        onEnterBack: () => setParticleParked(true),
+        onLeave: () => setParticleParked(false),
+        onLeaveBack: () => setParticleParked(false),
       });
 
       return () => {
         trigger.kill();
+        resetParticleParking();
         story.classList.remove("story-scrub");
         panes.forEach((pane, i) => pane.toggleAttribute("data-active", i === 0));
         ticks.forEach((tick, i) => tick.toggleAttribute("data-active", i === 0));
@@ -176,6 +186,11 @@ function registerAssembly() {
           start: "top top",
           end: "bottom bottom",
           scrub: true,
+          onRefresh: (self) => setParticleParked(self.isActive),
+          onEnter: () => setParticleParked(true),
+          onEnterBack: () => setParticleParked(true),
+          onLeave: () => setParticleParked(false),
+          onLeaveBack: () => setParticleParked(false),
         },
       });
 
@@ -215,6 +230,7 @@ function registerAssembly() {
       return () => {
         timeline.scrollTrigger?.kill();
         timeline.revert();
+        resetParticleParking();
         assembly.classList.remove("toolkit-scrub");
       };
     });
@@ -277,6 +293,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const previous = previousPathnameRef.current;
     previousPathnameRef.current = pathname;
+    resetParticleParking();
 
     if (prefersReducedMotion()) {
       showEverything();
@@ -368,6 +385,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       storyMedia?.revert();
       assemblyMedia?.revert();
       context.revert();
+      resetParticleParking();
     };
   }, [pathname]);
 

@@ -6,7 +6,7 @@ import { personalInfo } from "@/content/portfolio";
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Five roles across SaaS, financial services, digital health, e-commerce and HR tech.",
+    "Four roles across SaaS, financial services, digital health, e-commerce and HR tech.",
 };
 
 export default function ExperiencePage() {
@@ -17,13 +17,13 @@ export default function ExperiencePage() {
         <h1 className="max-w-[16ch] text-display font-semibold text-paper-0" data-hero-reveal data-field-mask>
           Five years.
           <br />
-          Five rooms.
+          Four rooms.
         </h1>
         <p className="mt-8 max-w-[52ch] text-[16px] leading-[1.7] text-paper-1" data-hero-reveal data-field-mask>
           {personalInfo.description}
         </p>
         <p className="label-mono mt-12" data-hero-reveal data-field-mask>
-          on file: 05 roles · saas · finance · health · commerce · hr
+          on file: 04 roles · saas · finance · health · commerce · hr
         </p>
       </header>
 
